@@ -94,6 +94,17 @@ export default function App() {
       root.classList.remove('dark');
       root.classList.add('light');
     }
+
+    // Update favicon
+    const iconUrl = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
+    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.href = iconUrl;
+
     try { localStorage.setItem('devkit_theme', theme); } catch {}
   }, [theme]);
 
@@ -105,7 +116,7 @@ export default function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
       <TitleBar />
       <div className="app" style={{ flex: 1, height: 'auto', width: '100%' }}>
-        <Sidebar active={activeTool ?? ''} onSelect={id => setActiveTool(id)} />
+        <Sidebar active={activeTool ?? ''} onSelect={id => setActiveTool(id)} theme={theme} />
         <div className="main">
           <TopBar
             toolName={toolConfig ? toolConfig.name : 'Dev Oxide'}

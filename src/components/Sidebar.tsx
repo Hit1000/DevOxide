@@ -17,52 +17,57 @@ export const tools = [
 interface SidebarProps {
   active: string;
   onSelect: (id: string) => void;
+  theme?: 'dark' | 'light';
 }
 
-export function Sidebar({ active, onSelect }: SidebarProps) {
+export function Sidebar({ active, onSelect, theme = 'dark' }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const categories = Array.from(new Set(tools.map(t => t.category)));
-
-  if (collapsed) {
-    return (
-      <div style={{ width: 48, minWidth: 48, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0', gap: 4, height: '100vh' }}>
-        <button className="icon-btn" onClick={() => setCollapsed(false)} style={{ marginBottom: 8 }}>
-          <Icons.chevronRight />
-        </button>
-        {tools.map(t => {
-          const Icon = Icons[t.icon as keyof typeof Icons];
-          return (
-            <button
-              key={t.id}
-              className="icon-btn"
-              onClick={() => onSelect(t.id)}
-              style={{ color: active === t.id ? 'var(--text)' : 'var(--text-muted)', background: active === t.id ? 'var(--active-bg)' : undefined }}
-              title={t.name}
-            >
-              <Icon />
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
+  const logoUrl = theme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-header" style={{ cursor: 'pointer' }} onClick={() => onSelect('')}>
-        <div className="sidebar-logo">🐙</div>
-        <span className="sidebar-title">Dev Oxide</span>
-        <button className="sidebar-collapse" onClick={(e) => { e.stopPropagation(); setCollapsed(true); }}>
-          <Icons.chevronLeft />
+    <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      <div 
+        className="sidebar-header" 
+        style={{ cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', padding: collapsed ? '0' : '0 12px' }} 
+        onClick={() => onSelect('')}
+      >
+        {!collapsed && <img src={logoUrl} alt="Logo" />}
+        {!collapsed && <span className="sidebar-title">Dev Oxide</span>}
+        <button 
+          className="icon-btn" 
+          onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }}
+          style={{ margin: collapsed ? '8px auto' : 0 }}
+        >
+          {collapsed ? <Icons.chevronRight /> : <Icons.chevronLeft />}
         </button>
       </div>
 
-      <nav className="sidebar-nav">
+      <nav className="sidebar-nav" style={{ padding: collapsed ? '8px 0' : undefined }}>
         {categories.map(cat => (
-          <div key={cat}>
-            <div className="sidebar-section-label">{cat}</div>
+          <div key={cat} style={{ display: 'flex', flexDirection: 'column', alignItems: collapsed ? 'center' : 'stretch' }}>
+            {!collapsed && <div className="sidebar-section-label">{cat}</div>}
             {tools.filter(t => t.category === cat).map(t => {
               const Icon = Icons[t.icon as keyof typeof Icons];
+              
+              if (collapsed) {
+                return (
+                  <button
+                    key={t.id}
+                    className="icon-btn"
+                    onClick={() => onSelect(t.id)}
+                    style={{ 
+                      color: active === t.id ? 'var(--text)' : 'var(--text-muted)', 
+                      background: active === t.id ? 'var(--active-bg)' : undefined,
+                      marginBottom: 4
+                    }}
+                    title={t.name}
+                  >
+                    <Icon />
+                  </button>
+                );
+              }
+
               return (
                 <div
                   key={t.id}
