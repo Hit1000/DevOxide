@@ -13,39 +13,7 @@ interface ParseResult {
   errorLine?: number;
 }
 
-function cleanup(input: string): string {
-  let s = input;
-  s = s.replace(/(?<!:)\/\/.*$/gm, '');       // strip // comments
-  s = s.replace(/\/\*[\s\S]*?\*\//g, '');      // strip /* */ comments
-  s = s.replace(/[\u201C\u201D]/g, '"');       // curly double quotes
-  s = s.replace(/[\u2018\u2019]/g, "'");       // curly single quotes
-  s = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-  return s.trim();
-}
-
-function repairStructure(input: string): { result: string; repaired: boolean } {
-  let s = input;
-  const before = s;
-
-  // Auto-close unclosed brackets
-  const opens  = (s.match(/{/g) || []).length;
-  const closes = (s.match(/}/g) || []).length;
-  const obrk   = (s.match(/\[/g) || []).length;
-  const cbrk   = (s.match(/\]/g) || []).length;
-  for (let i = 0; i < opens  - closes; i++) s += '}';
-  for (let i = 0; i < obrk   - cbrk;   i++) s += ']';
-
-  // Remove trailing comma before } or ]
-  s = s.replace(/,(\s*[}\]])/g, '$1');
-
-  // Quote unquoted keys  { name: …  →  { "name": …
-  s = s.replace(/([{,])\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":');
-
-  // Replace single-quoted strings with double-quoted
-  s = s.replace(/'([^'\\]|\\.)*'/g, (m) => '"' + m.slice(1, -1).replace(/"/g, '\\"') + '"');
-
-  return { result: s, repaired: s !== before };
-}
+import { jsonrepair } from 'jsonrepair';
 
 function getErrorLocation(input: string, pos: number) {
   const lines = input.substring(0, pos).split('\n');
@@ -55,48 +23,185 @@ function getErrorLocation(input: string, pos: number) {
 function parseAndFormat(raw: string, indent: number, sortKeys: boolean, minify: boolean): ParseResult {
   if (!raw.trim()) return { formatted: '', success: false, repaired: false };
 
-  const cleaned = cleanup(raw);
-  const { result: repaired, repaired: wasRepaired } = repairStructure(cleaned);
-
-  // Try strict parse first
-  try {
-    let parsed = JSON.parse(repaired);
+  const formatObj = (parsed: any, isRepaired: boolean) => {
     if (sortKeys) parsed = deepSortKeys(parsed);
-    const formatted = minify ? JSON.stringify(parsed) : JSON.stringify(parsed, null, indent);
-    return { formatted, success: true, repaired: wasRepaired };
-  } catch {/* fall through */}
+    const formatted = minify ? JSON.stringify(parsed, null, 0) : JSON.stringify(parsed, null, indent);
+    return { formatted, success: true, repaired: isRepaired };
+  };
 
-  // Try parsing the cleaned (without repair) to get accurate error location
+  let repairedStr = raw;
+  let parsedAST: any = null;
+  let wasRepaired = false;
+  let successParse = false;
+
+  // 1. Try strict JSON
   try {
-    JSON.parse(cleaned);
+    parsedAST = JSON.parse(raw);
+    successParse = true;
+  } catch (e1) {
+    // 2. Try single jsonrepair
+    try {
+      repairedStr = jsonrepair(raw);
+      parsedAST = JSON.parse(repairedStr);
+      successParse = true;
+      wasRepaired = true;
+    } catch (e2) {
+      // 3. Try wrapping in array (NDJSON) and repairing
+      try {
+        let wrapped = raw.replace(/\}\s*,?\s*\{/g, '}, {');
+        wrapped = `[${wrapped}]`;
+        repairedStr = jsonrepair(wrapped);
+        parsedAST = JSON.parse(repairedStr);
+        successParse = true;
+        wasRepaired = true;
+      } catch (e3) {
+        // failed all parsing
+      }
+    }
+  }
+
+  // If we got an AST, we can sort keys and format perfectly
+  if (successParse) {
+    return formatObj(parsedAST, wasRepaired);
+  }
+
+  // Fallback to token-based formatting for completely invalid/truncated JSON that even jsonrepair can't fix
+  let tokenFormatted = raw;
+  try {
+    tokenFormatted = formatWithTokens(raw, indent);
+  } catch (e) {}
+
+  // Get accurate error location from raw parse failure
+  let errorMsg = 'Could not parse JSON';
+  let errorLine = undefined;
+  try {
+    JSON.parse(raw);
   } catch (e2: any) {
-    // Extract position from SyntaxError message
     const m = String(e2.message).match(/position (\d+)/);
     if (m) {
       const pos = parseInt(m[1]);
-      const { line, col } = getErrorLocation(cleaned, pos);
-      return {
-        formatted: cleaned,
-        success: false,
-        repaired: false,
-        errorMsg: `Line ${line}:${col} — ${e2.message}`,
-        errorLine: line,
-      };
+      const { line, col } = getErrorLocation(raw, pos);
+      errorMsg = `Line ${line}:${col} — ${e2.message}`;
+      errorLine = line;
+    } else {
+      errorMsg = e2.message;
     }
   }
 
   return {
-    formatted: repaired,
+    formatted: tokenFormatted,
     success: false,
-    repaired: wasRepaired,
-    errorMsg: 'Could not parse JSON',
+    repaired: false,
+    errorMsg,
+    errorLine,
   };
 }
 
+// ── Fallback Tokenizer ────────────────────────────────────────────────────────
+
+type Token = { type: string; value: string };
+
+function formatWithTokens(input: string, indentSize: number): string {
+  const tokens: Token[] = [];
+  let position = 0;
+
+  while (position < input.length) {
+    const char = input[position];
+
+    if (/\s/.test(char)) {
+      let value = '';
+      while (position < input.length && /\s/.test(input[position])) value += input[position++];
+      tokens.push({ type: 'whitespace', value });
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      const quote = char;
+      let value = char;
+      position++;
+      while (position < input.length && input[position] !== quote) {
+        if (input[position] === '\\') {
+          value += input[position] + (input[position + 1] || '');
+          position += 2;
+        } else {
+          value += input[position++];
+        }
+      }
+      if (position < input.length) value += input[position++];
+      tokens.push({ type: 'string', value });
+      continue;
+    }
+
+    if (/[0-9\-]/.test(char)) {
+      let value = '';
+      while (position < input.length && /[0-9.eE\-+]/.test(input[position])) value += input[position++];
+      tokens.push({ type: 'number', value });
+      continue;
+    }
+
+    if (/[a-zA-Z_]/.test(char)) {
+      let value = '';
+      while (position < input.length && /[a-zA-Z0-9_]/.test(input[position])) value += input[position++];
+      tokens.push({ type: 'key', value });
+      continue;
+    }
+
+    const single = { ':': 'colon', ',': 'comma', '{': 'brace', '}': 'brace', '[': 'bracket', ']': 'bracket' } as Record<string, string>;
+    if (single[char]) {
+      tokens.push({ type: single[char], value: char });
+      position++;
+      continue;
+    }
+
+    tokens.push({ type: 'unknown', value: char });
+    position++;
+  }
+
+  let result = '';
+  let indentLevel = 0;
+  const ind = ' '.repeat(indentSize);
+  let newline = false;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token.type === 'whitespace') continue;
+
+    if (token.type === 'brace' || token.type === 'bracket') {
+      if (token.value === '{' || token.value === '[') {
+        result += token.value;
+        indentLevel++;
+        result += '\n' + ind.repeat(indentLevel);
+        newline = true;
+      } else {
+        indentLevel = Math.max(0, indentLevel - 1);
+        result += '\n' + ind.repeat(indentLevel) + token.value;
+        newline = false;
+      }
+    } else if (token.type === 'comma') {
+      result += ',';
+      result += '\n' + ind.repeat(indentLevel);
+      newline = true;
+    } else if (token.type === 'colon') {
+      result += ': ';
+    } else {
+      if (newline) result += ind.repeat(indentLevel);
+      result += token.value;
+      newline = false;
+    }
+  }
+
+  return result;
+}
+
 function deepSortKeys(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(deepSortKeys);
+  if (Array.isArray(obj)) {
+    return obj.map(deepSortKeys);
+  }
   if (obj !== null && typeof obj === 'object') {
-    return Object.keys(obj).sort().reduce((acc: any, k) => { acc[k] = deepSortKeys(obj[k]); return acc; }, {});
+    return Object.keys(obj).sort().reduce((acc: any, k) => {
+      acc[k] = deepSortKeys(obj[k]);
+      return acc;
+    }, {});
   }
   return obj;
 }
@@ -123,7 +228,20 @@ export function JsonFormatter() {
   const [sortKeys, setSortKeys]     = useState(false);
   const [minify, setMinify]         = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const optionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+        setShowOptions(false);
+      }
+    };
+    if (showOptions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showOptions]);
 
   // Auto-process on every keystroke (debounced 250 ms)
   useEffect(() => {
@@ -167,7 +285,7 @@ export function JsonFormatter() {
         </button>
         <button className="btn btn-secondary" onClick={loadSample}>Load Sample</button>
 
-        <div className="toolbar-right" style={{ position: 'relative' }}>
+        <div className="toolbar-right" style={{ position: 'relative' }} ref={optionsRef}>
           <button className="btn btn-secondary" onClick={() => setShowOptions(v => !v)}>
             ⚙ Options {showOptions ? '▲' : '▼'}
           </button>

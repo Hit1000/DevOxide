@@ -18,8 +18,19 @@ interface TopBarProps {
 
 export function TopBar({ toolName, hint, theme, onToggleTheme, onGoHome }: TopBarProps) {
   const btnRef = React.useRef<HTMLButtonElement>(null);
+  const settingsRef = React.useRef<HTMLDivElement>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [textSize, setTextSize] = useState(13);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setShowSettings(false);
+      }
+    };
+    if (showSettings) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettings]);
 
   React.useEffect(() => {
     const savedSize = localStorage.getItem('devkit_text_size');
@@ -93,7 +104,7 @@ export function TopBar({ toolName, hint, theme, onToggleTheme, onGoHome }: TopBa
         <span className="current">{toolName}</span>
         {hint && <span className="topbar-hint">{hint}</span>}
       </div>
-      <div className="topbar-actions" style={{ position: 'relative' }}>
+      <div className="topbar-actions" style={{ position: 'relative' }} ref={settingsRef}>
         <button ref={btnRef} className="icon-btn" onClick={handleToggle} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           <span className="theme-icon">
             {theme === 'dark' ? <Icons.sun /> : <MoonIcon />}
