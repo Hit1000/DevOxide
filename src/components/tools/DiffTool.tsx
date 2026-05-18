@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { compareText, generateUnifiedDiffText } from '../../lib/diffEngine';
+import { compareTextRust, generateUnifiedDiffText } from '../../lib/diffEngine';
 import type { UnifiedRow, WordSegment, DiffResult } from '../../lib/diffEngine';
 import { Icons } from '../Icons';
 import { CopyBtn } from '../TopBar';
@@ -227,8 +227,9 @@ export function DiffTool() {
   useEffect(() => {
     clearTimeout(debounceRef.current);
     if (!left && !right) { setResult(null); return; }
-    debounceRef.current = setTimeout(() => {
-      setResult(compareText(left, right, ignoreCase));
+    debounceRef.current = setTimeout(async () => {
+      const res = await compareTextRust(left, right, ignoreCase);
+      setResult(res);
       setCollapsed(new Set());
     }, 300);
     return () => clearTimeout(debounceRef.current);

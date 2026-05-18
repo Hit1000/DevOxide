@@ -3,6 +3,38 @@
 version = 4
 
 [[package]]
+name = "DevOxide"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "chrono",
+ "csscolorparser",
+ "csv",
+ "jaq-core",
+ "jaq-interpret",
+ "jaq-parse",
+ "json5",
+ "jsonwebtoken",
+ "md-5",
+ "pulldown-cmark",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha1",
+ "sha2",
+ "similar",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-opener",
+ "tauri-plugin-store",
+ "toml 0.8.2",
+ "urlencoding",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3769,38 +3801,6 @@ dependencies = [
  "webview2-com",
  "window-vibrancy",
  "windows",
-]
-
-[[package]]
-name = "tauri-app"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "chrono",
- "csscolorparser",
- "csv",
- "jaq-core",
- "jaq-interpret",
- "jaq-parse",
- "json5",
- "jsonwebtoken",
- "md-5",
- "pulldown-cmark",
- "regex",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha1",
- "sha2",
- "similar",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-opener",
- "tauri-plugin-store",
- "toml 0.8.2",
- "urlencoding",
 ]
 
 [[package]]

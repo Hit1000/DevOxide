@@ -31,15 +31,30 @@ export interface DiffResult {
   stats: DiffStats;
 }
 
+import { invoke } from '@tauri-apps/api/core';
+
 export function compareText(original: string, modified: string, ignoreCase = false): DiffResult {
   let a = original;
   let b = modified;
   if (ignoreCase) { a = a.toLowerCase(); b = b.toLowerCase(); }
-  return buildDiffResult(a, b);
+  const changes = diffLines(a, b);
+  return buildDiffResult(changes);
 }
 
-function buildDiffResult(original: string, modified: string): DiffResult {
-  const changes = diffLines(original, modified);
+export async function compareTextRust(original: string, modified: string, ignoreCase = false): Promise<DiffResult> {
+  let a = original;
+  let b = modified;
+  if (ignoreCase) { a = a.toLowerCase(); b = b.toLowerCase(); }
+  const rustChanges = await invoke<any[]>('diff_text', { left: a, right: b });
+  const changes = rustChanges.map(c => ({
+    value: c.content,
+    added: c.kind === 'added',
+    removed: c.kind === 'removed'
+  }));
+  return buildDiffResult(changes);
+}
+
+function buildDiffResult(changes: any[]): DiffResult {
   const leftLines: DiffLine[] = [];
   const rightLines: DiffLine[] = [];
   const unifiedRows: UnifiedRow[] = [];

@@ -49,10 +49,10 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
 
   return (
     <div className="sidebar">
-      <div className="sidebar-header">
+      <div className="sidebar-header" style={{ cursor: 'pointer' }} onClick={() => onSelect('')}>
         <div className="sidebar-logo">🐙</div>
-        <span className="sidebar-title">DevKit</span>
-        <button className="sidebar-collapse" onClick={() => setCollapsed(true)}>
+        <span className="sidebar-title">Dev Oxide</span>
+        <button className="sidebar-collapse" onClick={(e) => { e.stopPropagation(); setCollapsed(true); }}>
           <Icons.chevronLeft />
         </button>
       </div>

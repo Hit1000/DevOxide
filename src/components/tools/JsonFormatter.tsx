@@ -103,7 +103,7 @@ function deepSortKeys(obj: any): any {
 
 // ── Sample ────────────────────────────────────────────────────────────────────
 const SAMPLE = `{
-  name: 'DevKit',
+  name: 'Dev Oxide',
   version: '1.0.0',
   tools: ["JSON Formatter", "Regex Tester", "Diff Tool",],
   active: true,

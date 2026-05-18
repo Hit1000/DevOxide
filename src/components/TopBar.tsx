@@ -13,10 +13,53 @@ interface TopBarProps {
   hint: string;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
+  onGoHome?: () => void;
 }
 
-export function TopBar({ toolName, hint, theme, onToggleTheme }: TopBarProps) {
+export function TopBar({ toolName, hint, theme, onToggleTheme, onGoHome }: TopBarProps) {
   const btnRef = React.useRef<HTMLButtonElement>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [textSize, setTextSize] = useState(13);
+
+  React.useEffect(() => {
+    const savedSize = localStorage.getItem('devkit_text_size');
+    if (savedSize) {
+      const size = parseInt(savedSize, 10);
+      setTextSize(size);
+      document.documentElement.style.setProperty('--base-font-size', `${size}px`);
+    } else {
+      document.documentElement.style.setProperty('--base-font-size', '13px');
+    }
+  }, []);
+
+  const changeTextSize = (delta: number) => {
+    setTextSize(prev => {
+      const newSize = Math.max(10, Math.min(24, prev + delta));
+      document.documentElement.style.setProperty('--base-font-size', `${newSize}px`);
+      localStorage.setItem('devkit_text_size', newSize.toString());
+      return newSize;
+    });
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === '=' || e.key === '+') {
+          e.preventDefault();
+          changeTextSize(1);
+        } else if (e.key === '-') {
+          e.preventDefault();
+          changeTextSize(-1);
+        }
+      }
+      if (e.altKey && e.key === '`') {
+        e.preventDefault();
+        handleToggle();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [textSize, onToggleTheme]);
 
   const handleToggle = async () => {
     if ('startViewTransition' in document && btnRef.current) {
@@ -45,20 +88,33 @@ export function TopBar({ toolName, hint, theme, onToggleTheme }: TopBarProps) {
   return (
     <div className="topbar">
       <div className="topbar-breadcrumb">
-        <span>Tools</span>
+        <span onClick={onGoHome} style={{ cursor: 'pointer', transition: 'color 0.2s' }} className="hover:text-white">Tools</span>
         <span className="sep">›</span>
         <span className="current">{toolName}</span>
         {hint && <span className="topbar-hint">{hint}</span>}
       </div>
-      <div className="topbar-actions">
+      <div className="topbar-actions" style={{ position: 'relative' }}>
         <button ref={btnRef} className="icon-btn" onClick={handleToggle} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           <span className="theme-icon">
             {theme === 'dark' ? <Icons.sun /> : <MoonIcon />}
           </span>
         </button>
-        <button className="icon-btn" title="Settings">
+        <button className="icon-btn" title="Settings" onClick={() => setShowSettings(!showSettings)}>
           <Icons.settings />
         </button>
+        {showSettings && (
+          <div style={{
+            position: 'absolute', top: '100%', right: 0, marginTop: 4,
+            background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 6,
+            padding: 8, zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap'
+          }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Text Size</span>
+            <button className="btn btn-secondary" style={{ padding: '2px 8px' }} onClick={() => changeTextSize(-1)}>-</button>
+            <span style={{ fontSize: 12, width: 20, textAlign: 'center' }}>{Math.round((textSize / 13) * 100)}%</span>
+            <button className="btn btn-secondary" style={{ padding: '2px 8px' }} onClick={() => changeTextSize(1)}>+</button>
+          </div>
+        )}
       </div>
     </div>
   );

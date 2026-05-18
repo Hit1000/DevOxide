@@ -27,6 +27,7 @@ html.dark {
   --input-bg: #0c0c0e;
   --topbar-height: 44px;
   --sidebar-width: 240px;
+  --base-font-size: 15px;
 }
 
 /* ── Light theme ──────────────────────────────────────── */
@@ -51,6 +52,7 @@ html.light {
   --input-bg: #ffffff;
   --topbar-height: 44px;
   --sidebar-width: 240px;
+  --base-font-size: 13px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,7 +61,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 13px;
+  font-size: var(--base-font-size);
   line-height: 1.5;
   overflow: hidden;
   height: 100vh;
@@ -73,7 +75,7 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
 /* Monospace */
-.mono { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: 13px; }
+.mono { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: var(--base-font-size); }
 
 /* Layout */
 .app { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
@@ -100,6 +102,39 @@ body {
   flex-shrink: 0;
   background: var(--bg);
 }
+.titlebar {
+  height: 30px;
+  background: var(--sidebar-bg);
+  user-select: none;
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  width: 100vw;
+}
+.titlebar-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 46px;
+  height: 30px;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+.titlebar-button:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+}
+html.light .titlebar-button:hover {
+  background: rgba(0,0,0,0.05);
+}
+.titlebar-button.close:hover,
+html.light .titlebar-button.close:hover {
+  background: #e81123;
+  color: white;
+}
+
 .tool-area { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
 /* Sidebar header */
@@ -149,7 +184,7 @@ body {
   padding: 6px 12px;
   cursor: pointer;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--base-font-size);
   font-weight: 400;
   transition: background 0.1s, color 0.1s, border-color 0.1s;
   border-left: 2px solid transparent;
@@ -166,7 +201,7 @@ body {
 /* Topbar */
 .topbar-breadcrumb {
   display: flex; align-items: center; gap: 6px;
-  color: var(--text-muted); font-size: 13px; flex: 1;
+  color: var(--text-muted); font-size: var(--base-font-size); flex: 1;
 }
 .topbar-breadcrumb .sep { color: var(--text-dim); }
 .topbar-breadcrumb .current { color: var(--text); font-weight: 500; }
@@ -212,7 +247,7 @@ body {
 .btn-secondary:hover { background: var(--btn-secondary-hover); }
 .btn-ghost { background: transparent; color: var(--text-muted); border: none; }
 .btn-ghost:hover { background: var(--btn-secondary-bg); color: var(--text); }
-.btn svg { width: 13px; height: 13px; }
+.btn svg { width: var(--base-font-size); height: var(--base-font-size); }
 
 /* Split pane */
 .split-pane { display: flex; flex: 1; overflow: hidden; }
@@ -237,7 +272,7 @@ body {
 /* CodeMirror overrides */
 .cm-editor { height: 100%; background: var(--bg) !important; }
 .cm-editor .cm-content { padding: 8px 0; }
-.cm-editor .cm-scroller { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace !important; font-size: 13px; }
+.cm-editor .cm-scroller { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace !important; font-size: var(--base-font-size); }
 .cm-editor.cm-focused { outline: none; }
 .cm-gutters { background: var(--sidebar-bg) !important; border-right: 1px solid var(--border) !important; }
 .cm-lineNumbers .cm-gutterElement { color: var(--text-dim) !important; padding: 0 8px; min-width: 36px; }
@@ -253,7 +288,7 @@ textarea, input[type="text"] {
   border-radius: 6px;
   padding: 8px 10px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--base-font-size);
   resize: none;
   outline: none;
   transition: border-color 0.15s;
@@ -331,7 +366,7 @@ select {
 .home-card-icon.purple { background: rgba(124,58,237,0.15); }
 .home-card-icon.orange { background: rgba(245,158,11,0.15); }
 .home-card-icon.blue { background: rgba(37,99,235,0.15); }
-.home-card-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.home-card-name { font-weight: 600; font-size: var(--base-font-size); margin-bottom: 4px; }
 .home-card-desc { font-size: 11px; color: var(--text-muted); }
 
 /* Regex flag buttons */
@@ -367,12 +402,12 @@ select {
   background: var(--card); border: 1px solid var(--border); border-radius: 8px; gap: 8px;
 }
 .color-format-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); width: 48px; flex-shrink: 0; }
-.color-format-val { flex: 1; font-family: 'Fira Code', monospace; font-size: 13px; }
+.color-format-val { flex: 1; font-family: 'Fira Code', monospace; font-size: var(--base-font-size); }
 
 /* Timestamp result */
 .ts-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
 .ts-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 4px; }
-.ts-val { font-family: 'Fira Code', monospace; font-size: 13px; }
+.ts-val { font-family: 'Fira Code', monospace; font-size: var(--base-font-size); }
 
 /* Notepad tabs */
 .tab-bar { display: flex; align-items: center; border-bottom: 1px solid var(--border); background: var(--sidebar-bg); flex-shrink: 0; padding: 0 8px; gap: 2px; height: 37px; }
@@ -439,22 +474,13 @@ select {
 }
 .url-tab.active { color: var(--text); border-bottom-color: var(--accent); }
 .url-tab:hover:not(.active) { color: var(--text); }
-.url-tab svg { width: 13px; height: 13px; }
+.url-tab svg { width: var(--base-font-size); height: var(--base-font-size); }
 
 /* ══════════════════════════════════════════════
    ANIMATIONS & EFFECTS (ported from Tools)
 ══════════════════════════════════════════════ */
 
-/* ── Film grain overlay (from Tools layout.tsx) ── */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
+/* ── Film grain overlay (removed for performance) ── */
 
 /* ── Page transition (from Tools PageTransition.tsx) ── */
 @keyframes pageIn {

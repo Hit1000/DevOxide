@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, tools } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { TitleBar } from './components/TitleBar';
 
 import { Notepad }           from './components/tools/Notepad';
 import { RegexTester }       from './components/tools/RegexTester';
@@ -26,7 +27,7 @@ function Home({ onSelect }: { onSelect: (id: string) => void }) {
       <div>
         <div style={{ marginBottom: 6 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-            DevKit <span style={{ fontSize: 12, background: 'var(--btn-secondary-bg)', border: '1px solid var(--border-light)', borderRadius: 99, padding: '2px 10px', fontWeight: 400, color: 'var(--text-muted)' }}>v0.1 beta</span>
+            Dev Oxide <span style={{ fontSize: 12, background: 'var(--btn-secondary-bg)', border: '1px solid var(--border-light)', borderRadius: 99, padding: '2px 10px', fontWeight: 400, color: 'var(--text-muted)' }}>v0.1 beta</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>10 tools available · offline, local-first</p>
         </div>
@@ -101,20 +102,24 @@ export default function App() {
   const toolConfig = tools.find(t => t.id === activeTool);
 
   return (
-    <div className="app">
-      <Sidebar active={activeTool ?? ''} onSelect={id => setActiveTool(id)} />
-      <div className="main">
-        <TopBar
-          toolName={toolConfig ? toolConfig.name : 'DevKit'}
-          hint={toolConfig ? toolConfig.hint : 'CMD+K for commands'}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-        />
-        <div className="tool-area">
-          {activeTool
-            ? <React.Fragment key={activeTool}>{renderTool(activeTool)}</React.Fragment>
-            : <Home onSelect={setActiveTool} />
-          }
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <TitleBar />
+      <div className="app" style={{ flex: 1, height: 'auto', width: '100%' }}>
+        <Sidebar active={activeTool ?? ''} onSelect={id => setActiveTool(id)} />
+        <div className="main">
+          <TopBar
+            toolName={toolConfig ? toolConfig.name : 'Dev Oxide'}
+            hint={toolConfig ? toolConfig.hint : 'CMD+K for commands'}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            onGoHome={() => setActiveTool(null)}
+          />
+          <div className="tool-area">
+            {activeTool
+              ? <React.Fragment key={activeTool}>{renderTool(activeTool)}</React.Fragment>
+              : <Home onSelect={setActiveTool} />
+            }
+          </div>
         </div>
       </div>
     </div>
