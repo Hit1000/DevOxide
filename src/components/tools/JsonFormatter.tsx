@@ -3,6 +3,7 @@ import { Editor } from '../shared/Editor';
 import { Icons } from '../Icons';
 import { CopyBtn } from '../TopBar';
 import { useTauri } from '../../hooks/useTauri';
+import { usePersistedState } from '../../hooks/useStore';
 
 // ── Client-side JSON repair (mirrors Tools/lib/parser/jsonParser.ts) ──────────
 interface ParseResult {
@@ -221,13 +222,13 @@ const SAMPLE = `{
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function JsonFormatter() {
-  const [input, setInput]           = useState('');
-  const [output, setOutput]         = useState('');
-  const [result, setResult]         = useState<ParseResult | null>(null);
-  const [indent, setIndent]         = useState(2);
-  const [sortKeys, setSortKeys]     = useState(false);
-  const [minify, setMinify]         = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
+  const [input, setInput, inputLoaded]       = usePersistedState<string>('json_formatter_input', '', 500);
+  const [output, setOutput]                  = useState('');
+  const [result, setResult]                  = useState<ParseResult | null>(null);
+  const [indent, setIndent, indentLoaded]    = usePersistedState<number>('json_formatter_indent', 2);
+  const [sortKeys, setSortKeys, sortLoaded]  = usePersistedState<boolean>('json_formatter_sort', false);
+  const [minify, setMinify, minifyLoaded]    = usePersistedState<boolean>('json_formatter_minify', false);
+  const [showOptions, setShowOptions]        = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -275,6 +276,8 @@ export function JsonFormatter() {
       return { keys: countKeys(parsed), depth: depth(parsed), bytes: new Blob([output]).size };
     } catch { return null; }
   }, [output]);
+
+  if (!inputLoaded || !indentLoaded || !sortLoaded || !minifyLoaded) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); const r = parseAndFormat(input, indent, sortKeys, minify); setOutput(r.formatted); setResult(r); } }}>

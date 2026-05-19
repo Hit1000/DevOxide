@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Sidebar, tools } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { TitleBar } from './components/TitleBar';
+import { usePersistedState } from './hooks/useStore';
 
 import { Notepad }           from './components/tools/Notepad';
 import { RegexTester }       from './components/tools/RegexTester';
@@ -76,16 +77,12 @@ function renderTool(id: string) {
 }
 
 export default function App() {
-  const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [activeTool, setActiveTool, toolLoaded] = usePersistedState<string | null>('active_tool', null);
+  const [theme, setThemeState, themeLoaded] = usePersistedState<'dark' | 'light'>('theme', 'dark');
 
-  // Theme: read from localStorage, default to 'dark'
-  const [theme, setThemeState] = useState<'dark' | 'light'>(() => {
-    try { return (localStorage.getItem('devkit_theme') as 'dark' | 'light') || 'dark'; }
-    catch { return 'dark'; }
-  });
-
-  // Apply theme class to <html> whenever it changes
+  // Apply theme class + favicon whenever theme changes
   useEffect(() => {
+    if (!themeLoaded) return;
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
@@ -104,11 +101,9 @@ export default function App() {
       document.getElementsByTagName('head')[0].appendChild(link);
     }
     link.href = iconUrl;
+  }, [theme, themeLoaded]);
 
-    try { localStorage.setItem('devkit_theme', theme); } catch {}
-  }, [theme]);
-
-  const toggleTheme = () => setThemeState(t => t === 'dark' ? 'light' : 'dark');
+  const toggleTheme = () => setThemeState(theme === 'dark' ? 'light' : 'dark');
 
   const toolConfig = tools.find(t => t.id === activeTool);
 

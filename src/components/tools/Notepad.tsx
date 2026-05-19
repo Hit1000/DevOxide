@@ -1,17 +1,30 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Editor } from '../shared/Editor';
 import { Icons } from '../Icons';
 import { CopyBtn } from '../TopBar';
+import { usePersistedState } from '../../hooks/useStore';
 
 interface Tab { id: string; name: string; content: string; }
 
-let tabCounter = 1;
+const DEFAULT_TAB: Tab = { id: 't1', name: 'New Tab', content: '' };
 
 export function Notepad() {
-  const [tabs, setTabs] = useState<Tab[]>([{ id: 't1', name: 'New Tab', content: '' }]);
-  const [activeId, setActiveId] = useState('t1');
+  const [tabsData, setTabsData, loaded] = usePersistedState<{ tabs: Tab[]; activeTabId: string }>(
+    'notepad_tabs',
+    { tabs: [DEFAULT_TAB], activeTabId: 't1' },
+    500 // debounce 500ms for content changes
+  );
 
-  const activeTab = tabs.find(t => t.id === activeId)!;
+  const tabs     = tabsData.tabs;
+  const activeId = tabsData.activeTabId;
+
+  const setTabs     = (newTabs: Tab[]) => setTabsData({ tabs: newTabs, activeTabId: activeId });
+  const setActiveId = (newId: string)  => setTabsData({ tabs, activeTabId: newId });
+
+  // Generate unique IDs
+  const counterRef = useRef(Math.max(...(tabsData.tabs.map(t => parseInt(t.id.slice(1)) || 0)), 1));
+
+  const activeTab = tabs.find(t => t.id === activeId) ?? tabs[0];
   const text = activeTab?.content ?? '';
 
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -19,30 +32,31 @@ export function Notepad() {
   const lineCount = text.split('\n').length;
 
   const addTab = () => {
-    tabCounter++;
-    const id = `t${tabCounter}`;
-    setTabs(prev => [...prev, { id, name: 'New Tab', content: '' }]);
-    setActiveId(id);
+    counterRef.current++;
+    const id = `t${counterRef.current}`;
+    const newTabs = [...tabs, { id, name: 'New Tab', content: '' }];
+    setTabsData({ tabs: newTabs, activeTabId: id });
   };
 
   const closeTab = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (tabs.length === 1) return;
-    const idx = tabs.findIndex(t => t.id === id);
+    const idx    = tabs.findIndex(t => t.id === id);
     const newTabs = tabs.filter(t => t.id !== id);
-    setTabs(newTabs);
-    if (activeId === id) {
-      setActiveId(newTabs[Math.max(0, idx - 1)].id);
-    }
+    const newActiveId = activeId === id ? newTabs[Math.max(0, idx - 1)].id : activeId;
+    setTabsData({ tabs: newTabs, activeTabId: newActiveId });
   };
 
   const updateContent = useCallback((val: string) => {
-    setTabs(prev => prev.map(t => t.id === activeId ? { ...t, content: val } : t));
-  }, [activeId]);
+    setTabsData({
+      tabs: tabs.map(t => t.id === activeId ? { ...t, content: val } : t),
+      activeTabId: activeId,
+    });
+  }, [activeId, tabs]);
 
-  const clearAll = () => {
-    setTabs(prev => prev.map(t => t.id === activeId ? { ...t, content: '' } : t));
-  };
+  const clearAll = () => updateContent('');
+
+  if (!loaded) return null; // Don't flash empty state before store loads
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -80,6 +94,7 @@ export function Notepad() {
         </div>
         <div className="status-right">
           <span><span className="status-dot green"></span>Saved</span>
+          <CopyBtn value={text} />
           <button className="btn btn-ghost" style={{ fontSize: 11, padding: '2px 6px' }} onClick={clearAll}>Clear</button>
         </div>
       </div>
