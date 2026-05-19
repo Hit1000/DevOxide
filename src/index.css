@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* ── Dark theme (default) ─────────────────────────────── */
 :root,
@@ -415,13 +415,23 @@ select {
 .ts-val { font-family: 'Fira Code', monospace; font-size: var(--base-font-size); }
 
 /* Notepad tabs */
-.tab-bar { display: flex; align-items: center; border-bottom: 1px solid var(--border); background: var(--sidebar-bg); flex-shrink: 0; padding: 0 8px; gap: 2px; height: 37px; }
+.tab-bar { 
+  display: flex; align-items: center; border-bottom: 1px solid var(--border); background: var(--sidebar-bg); flex-shrink: 0; padding: 0 8px; gap: 2px; height: 37px; 
+  overflow-x: auto; scrollbar-width: none; 
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
 .tab-item {
   display: flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 6px 6px 0 0;
   font-size: 12px; cursor: pointer; color: var(--text-muted);
   border: 1px solid transparent; border-bottom: none;
   transition: all 0.15s; white-space: nowrap;
+  flex-shrink: 0; user-select: none;
+}
+.tab-item-name {
+  max-width: 150px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .tab-item.active { background: var(--bg); color: var(--text); border-color: var(--border); }
 .tab-item:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
