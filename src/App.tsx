@@ -11,6 +11,7 @@ import { JsonFormatter }     from './components/tools/JsonFormatter';
 import { UrlEncoder }        from './components/tools/UrlEncoder';
 import { JwtDecoder }        from './components/tools/JwtDecoder';
 import { DiffTool }          from './components/tools/DiffTool';
+import { ZipDiff }           from './components/tools/ZipDiff';
 import { ColorConverter }    from './components/tools/ColorConverter';
 import { HashGenerator }     from './components/tools/HashGenerator';
 import { TimestampConverter } from './components/tools/TimestampConverter';
@@ -30,7 +31,7 @@ function Home({ onSelect }: { onSelect: (id: string) => void }) {
           <h1 style={{ fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
             Dev Oxide <span style={{ fontSize: 12, background: 'var(--btn-secondary-bg)', border: '1px solid var(--border-light)', borderRadius: 99, padding: '2px 10px', fontWeight: 400, color: 'var(--text-muted)' }}>v0.1 beta</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>10 tools available · offline, local-first</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>11 tools available · offline, local-first</p>
         </div>
       </div>
       {categories.map(cat => (
@@ -69,6 +70,7 @@ function renderTool(id: string) {
     case 'url':       return <UrlEncoder />;
     case 'jwt':       return <JwtDecoder />;
     case 'diff':      return <DiffTool />;
+    case 'zipdiff':   return <ZipDiff />;
     case 'color':     return <ColorConverter />;
     case 'hash':      return <HashGenerator />;
     case 'timestamp': return <TimestampConverter />;

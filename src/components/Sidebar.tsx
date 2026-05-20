@@ -9,6 +9,7 @@ export const tools = [
   { id: 'url',       name: 'URL Encoder',    icon: 'url',       category: 'ENCODING TOOLS', hint: 'Auto-encodes on type' },
   { id: 'jwt',       name: 'JWT Decoder',    icon: 'jwt',       category: 'ENCODING TOOLS', hint: 'Paste token to decode' },
   { id: 'diff',      name: 'Diff Tool',      icon: 'diff',      category: 'DIFF TOOLS',     hint: 'CMD+Enter to diff' },
+  { id: 'zipdiff',   name: 'Zip Diff',       icon: 'diff',      category: 'DIFF TOOLS',     hint: 'Compare ZIPs and folders' },
   { id: 'color',     name: 'Color Converter',icon: 'color',     category: 'MISC',           hint: 'Auto-detects format' },
   { id: 'hash',      name: 'Hash Generator', icon: 'hash',      category: 'MISC',           hint: 'CMD+Enter to generate' },
   { id: 'timestamp', name: 'Timestamp',      icon: 'timestamp', category: 'MISC',           hint: 'Auto-detects input' },

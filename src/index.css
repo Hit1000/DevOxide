@@ -25,6 +25,10 @@ html.dark {
   --btn-secondary-bg: #1c1c1f;
   --btn-secondary-hover: #27272a;
   --input-bg: #0c0c0e;
+  --editor-bg: #0b0b0e;
+  --editor-text: #e5e7eb;
+  --result-bg: #101014;
+  --result-text: #e5e7eb;
   --topbar-height: 44px;
   --sidebar-width: 240px;
   --base-font-size: 15px;
@@ -50,6 +54,10 @@ html.light {
   --btn-secondary-bg: #f1f0f0;
   --btn-secondary-hover: #e5e4e0;
   --input-bg: #ffffff;
+  --editor-bg: #ffffff;
+  --editor-text: #111827;
+  --result-bg: #f9fafb;
+  --result-text: #111827;
   --topbar-height: 44px;
   --sidebar-width: 240px;
   --base-font-size: 13px;
@@ -284,6 +292,61 @@ html.light .titlebar-button.close:hover {
 .cm-activeLine { background: rgba(255,255,255,0.025) !important; }
 .cm-selectionBackground { background: rgba(124,58,237,0.25) !important; }
 .cm-editor .cm-cursor { border-left-color: var(--text) !important; }
+
+/* Zip Diff line highlights */
+.cm-line-added { background: rgba(34,197,94,0.15); }
+.cm-line-removed { background: rgba(239,68,68,0.15); }
+.cm-line-accepted { background: rgba(34,197,94,0.08); }
+.cm-line-rejected { background: rgba(239,68,68,0.08); }
+.cm-line-edited { background: rgba(251,191,36,0.12); }
+
+.cm-diff-gutter .cm-gutterElement {
+  width: 16px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.cm-gutter-added { color: #22c55e; font-weight: 600; }
+.cm-gutter-removed { color: #ef4444; font-weight: 600; }
+
+.cm-line-number-gutter .cm-gutterElement {
+  min-width: 36px;
+  padding: 0 8px;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: right;
+}
+
+.cm-hunk-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px;
+  background: rgba(24,24,27,0.9);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  color: var(--text-muted);
+}
+.cm-hunk-bar-label { color: var(--text-dim); }
+.cm-hunk-bar-range { color: var(--text-muted); }
+.cm-hunk-bar-spacer { flex: 1; }
+.cm-hunk-action {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.cm-hunk-action:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.cm-hunk-action.is-accepted { background: rgba(34,197,94,0.2); color: #4ade80; }
+.cm-hunk-action.is-rejected { background: rgba(239,68,68,0.2); color: #f87171; }
+.cm-hunk-action.is-edited { background: rgba(251,191,36,0.2); color: #fbbf24; }
+
+.zip-diff-resize-handle { background: var(--border); }
 
 /* Textarea / Input base */
 textarea, input[type="text"] {
@@ -657,6 +720,7 @@ html.light .cm-lineNumbers .cm-gutterElement { color: #9ca3af !important; }
 html.light .cm-activeLine { background: rgba(0,0,0,0.025) !important; }
 html.light .cm-selectionBackground { background: rgba(37,99,235,0.2) !important; }
 html.light .cm-editor .cm-cursor { border-left-color: #1a1a1a !important; }
+html.light .cm-hunk-bar { background: #f3f4f6; }
 
 /* ── Light mode sidebar item hover ── */
 html.light .sidebar-item:hover { background: rgba(0,0,0,0.03); }
