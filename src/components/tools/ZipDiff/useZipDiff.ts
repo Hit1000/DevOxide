@@ -21,7 +21,7 @@ interface UseZipDiffReturn {
   newSourceLabel: string | null;
   files: FileNode[];
   ignorePatterns: string[];
-  exceptionRules: Array<{ id: string; pattern: string; type: string }>;
+  exceptionRules: Array<{ id: string; pattern: string; type: 'line-pattern' | 'whitespace' | 'line-ending' }>;
   activeFile: string | null;
   ignoreDirty: boolean;
   hunkStats: Record<string, { accepted: number; rejected: number; edited: number; total: number }>;
@@ -35,14 +35,16 @@ interface UseZipDiffReturn {
   // Actions
   handleDrop: (e: React.DragEvent) => Promise<void>;
   handleBrowseOld: () => Promise<void>;
+  handleBrowseOldFolder: () => Promise<void>;
   handleBrowseNew: () => Promise<void>;
+  handleBrowseNewFolder: () => Promise<void>;
   handleIgnoreChange: (patterns: string[]) => void;
   handleRerunDiff: () => Promise<void>;
-  handleExceptionAdd: (pattern: string, type: string) => void;
+  handleExceptionAdd: (pattern: string, type: 'line-pattern' | 'whitespace' | 'line-ending') => void;
   handleFileSelect: (file: FileNode) => void;
   handleHunkAction: (relativePath: string, hunkId: string, action: 'accept' | 'reject' | 'edit', editedContent?: string) => Promise<void>;
   handleBulkHunkAction: (relativePath: string, action: 'accept' | 'reject') => Promise<void>;
-  handleExport: (selectedPaths: string[], exportMode: string) => Promise<void>;
+  handleExport: (selectedPaths: string[], exportMode: string) => Promise<any>;
   handleCloseSession: () => Promise<void>;
   handleHunkStatsChange: (relativePath: string, stats: { accepted: number; rejected: number; edited: number; total: number }) => void;
   setExportDialogOpen: (open: boolean) => void;
@@ -56,7 +58,7 @@ export function useZipDiff(): UseZipDiffReturn {
   const [newSourceLabel, setNewSourceLabel] = useState<string | null>(null);
   const [files, setFiles] = useState<FileNode[]>([]);
   const [ignorePatterns, setIgnorePatterns] = useState<string[]>([]);
-  const [exceptionRules, setExceptionRules] = useState<Array<{ id: string; pattern: string; type: string }>>([]);
+  const [exceptionRules, setExceptionRules] = useState<Array<{ id: string; pattern: string; type: 'line-pattern' | 'whitespace' | 'line-ending' }>>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [ignoreDirty, setIgnoreDirty] = useState(false);
   const [hunkStats, setHunkStats] = useState<Record<string, { accepted: number; rejected: number; edited: number; total: number }>>({});
@@ -113,7 +115,11 @@ export function useZipDiff(): UseZipDiffReturn {
       const { open } = await import('@tauri-apps/plugin-dialog');
       const selected = await open({
         multiple: false,
-        directory: true, // We'll default to folders for now
+        directory: false,
+        filters: [
+          { name: 'ZIP Archive', extensions: ['zip'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
       });
       if (selected && typeof selected === 'string') {
         setOldSourceLabel(selected);
@@ -125,9 +131,51 @@ export function useZipDiff(): UseZipDiffReturn {
       console.error('Failed to browse for old source:', err);
     }
   }, [newSourceLabel, startDiffSession]);
-  
+
+  // Handle browse for old source (folder)
+  const handleBrowseOldFolder = useCallback(async () => {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        multiple: false,
+        directory: true,
+      });
+      if (selected && typeof selected === 'string') {
+        setOldSourceLabel(selected);
+        if (newSourceLabel) {
+          startDiffSession(selected, newSourceLabel);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to browse for old source folder:', err);
+    }
+  }, [newSourceLabel, startDiffSession]);
+
   // Handle browse for new source
   const handleBrowseNew = useCallback(async () => {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        multiple: false,
+        directory: false,
+        filters: [
+          { name: 'ZIP Archive', extensions: ['zip'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+      });
+      if (selected && typeof selected === 'string') {
+        setNewSourceLabel(selected);
+        if (oldSourceLabel) {
+          startDiffSession(oldSourceLabel, selected);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to browse for new source:', err);
+    }
+  }, [oldSourceLabel, startDiffSession]);
+
+  // Handle browse for new source (folder)
+  const handleBrowseNewFolder = useCallback(async () => {
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
       const selected = await open({
@@ -141,7 +189,7 @@ export function useZipDiff(): UseZipDiffReturn {
         }
       }
     } catch (err) {
-      console.error('Failed to browse for new source:', err);
+      console.error('Failed to browse for new source folder:', err);
     }
   }, [oldSourceLabel, startDiffSession]);
 
@@ -206,14 +254,14 @@ export function useZipDiff(): UseZipDiffReturn {
   }, [oldSourceLabel, newSourceLabel, startDiffSession]);
   
   // Handle exception rule addition
-  const handleExceptionAdd = useCallback((pattern: string, type: string) => {
+  const handleExceptionAdd = useCallback((pattern: string, type: 'line-pattern' | 'whitespace' | 'line-ending') => {
     setExceptionRules(prev => [
       ...prev,
       {
         id: Math.random().toString(36).substr(2, 9),
         pattern,
-        type
-      }
+        type,
+      },
     ]);
   }, []);
   
@@ -235,7 +283,7 @@ export function useZipDiff(): UseZipDiffReturn {
       if (action === 'edit' && editedContent !== undefined) {
         await setHunkState(sessionId!, relativePath, hunkId, 'edited', editedContent);
       } else {
-        await setHunkState(sessionId!, relativePath, hunkId, action);
+        await setHunkState(sessionId!, relativePath, hunkId, action as 'accepted' | 'rejected');
       }
       
       // In a real implementation, we would update the diff cache here
@@ -253,7 +301,7 @@ export function useZipDiff(): UseZipDiffReturn {
   ) => {
     try {
       setIsLoading(true);
-      await setAllHunks(sessionId!, relativePath, action);
+      await setAllHunks(sessionId!, relativePath, action as 'accepted' | 'rejected');
       
       // In a real implementation, we would update the diff cache here
     } catch (err: any) {
@@ -264,28 +312,31 @@ export function useZipDiff(): UseZipDiffReturn {
   }, [sessionId]);
   
   // Handle export
-  const handleExport = useCallback(async (selectedPaths: string[], exportMode: string) => {
+  const handleExport = useCallback(async (selectedPaths: string[], exportMode: string): Promise<any> => {
     try {
       const { save, open } = await import('@tauri-apps/plugin-dialog');
       let outputPath: string | null = null;
-      
+
       if (exportMode === 'patch_zip') {
-          outputPath = await save({ filters: [{ name: 'Zip Archive', extensions: ['zip'] }] });
+          outputPath = await save({
+            filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
+            defaultPath: 'result.zip',
+          });
       } else {
           outputPath = await open({ directory: true, multiple: false }) as string | null;
       }
-      
-      if (!outputPath) return; // User canceled dialog
+
+      if (!outputPath) return null; // User canceled dialog
 
       setIsLoading(true);
       setProgress({ stage: 'exporting', current: 0, total: 100, current_file: '' });
-      
+
       const result = await exportResult(sessionId!, selectedPaths, exportMode, outputPath);
-      // In a real implementation, we would show a success message with the result
-      console.log('Export result:', result);
-      
+      return result;
+
     } catch (err: any) {
       console.error('Failed to export:', err);
+      throw err;
     } finally {
       setIsLoading(false);
       setProgress(null);
@@ -338,7 +389,9 @@ export function useZipDiff(): UseZipDiffReturn {
     // Actions
     handleDrop,
     handleBrowseOld,
+    handleBrowseOldFolder,
     handleBrowseNew,
+    handleBrowseNewFolder,
     handleIgnoreChange,
     handleRerunDiff,
     handleExceptionAdd,

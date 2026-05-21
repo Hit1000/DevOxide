@@ -1,8 +1,7 @@
-import { useState, useCallback, RefObject } from 'react';
-import type { MouseEvent } from 'react';
+import { useState, useCallback, RefObject, type MouseEvent as ReactMouseEvent } from 'react';
 
 export function useResizable(
-  containerRef: RefObject<HTMLDivElement>,
+  containerRef: RefObject<HTMLDivElement | null>,
   initialPercents: [number, number, number] = [33, 33, 34],
   minPercent = 15,
   maxPercent = 60,
@@ -10,7 +9,7 @@ export function useResizable(
 ) {
   const [percents, setPercents] = useState<[number, number, number]>(initialPercents);
 
-  const startDrag = useCallback((dividerIndex: 0 | 1) => (event: MouseEvent) => {
+  const startDrag = useCallback((dividerIndex: 0 | 1) => (event: ReactMouseEvent) => {
     event.preventDefault();
     const container = containerRef.current;
     if (!container) return;
@@ -20,7 +19,7 @@ export function useResizable(
     let latestPercents = startPercents;
     const containerW = container.offsetWidth || 1;
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: globalThis.MouseEvent) => {
       const delta = ((moveEvent.clientX - startX) / containerW) * 100;
       const next = [...startPercents] as [number, number, number];
 

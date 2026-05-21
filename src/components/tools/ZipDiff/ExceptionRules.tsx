@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Icons } from '../../Icons';
 
+interface ExceptionRule {
+  id: string;
+  pattern: string;
+  type: 'line-pattern' | 'whitespace' | 'line-ending';
+}
+
 interface ExceptionRulesProps {
-  exceptionRules: Array<{ 
-    id: string; 
-    pattern: string; 
-    type: 'line-pattern' | 'whitespace' | 'line-ending' 
-  }>;
-  onAdd: (pattern: string, type: string) => void;
+  exceptionRules: Array<ExceptionRule>;
+  onAdd: (pattern: string, type: ExceptionRule['type']) => void;
 }
 
 export function ExceptionRules({ exceptionRules, onAdd }: ExceptionRulesProps) {

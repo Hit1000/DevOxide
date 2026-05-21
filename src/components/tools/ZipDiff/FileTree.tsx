@@ -11,7 +11,7 @@ interface FileTreeProps {
     new_size: number;
   }>;
   activeFile: string | null;
-  onFileSelect: (file: { relative_path: string }) => void;
+  onFileSelect: (file: FileTreeProps['files'][0]) => void;
   hunkStats?: Record<string, { accepted: number; rejected: number; edited: number; total: number }>;
 }
 
@@ -133,49 +133,52 @@ export function FileTree({ files, activeFile, onFileSelect, hunkStats }: FileTre
               const accepted = stats?.accepted ?? 0;
               const rejected = stats?.rejected ?? 0;
               const edited = stats?.edited ?? 0;
-              const hunkBadge = (accepted + rejected + edited) > 0
-                ? `${accepted}✓ ${rejected}✗`
+              const totalHunks = accepted + rejected + edited;
+              const hunkBadge = totalHunks > 0
+                ? `${accepted}✓ ${rejected}✗${edited > 0 ? ` ${edited}✎` : ''}`
                 : null;
               return (
-              <div 
+              <div
                 key={file.relative_path}
                 onClick={() => onFileSelect(file)}
                 className={`file-item ${activeFile === file.relative_path ? 'active' : ''}`}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  padding: '8px 12px', 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '6px 12px',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   background: isActive ? 'var(--active-bg)' : config.bg,
-                  marginBottom: '2px'
+                  marginBottom: '2px',
+                  gap: '8px'
                 }}
               >
-                <span style={{ 
-                  fontSize: '14px', 
-                  marginRight: '8px', 
+                <span style={{
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
                   color: config.color,
-                  minWidth: '16px',
-                  textAlign: 'center'
+                  minWidth: '14px',
+                  textAlign: 'center',
+                  fontWeight: '600',
+                  flexShrink: 0
                 }}>
                   {config.icon}
                 </span>
-                <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }}>
                   {file.relative_path}
                 </div>
                 {hunkBadge && (
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px', minWidth: '60px', textAlign: 'right', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0, fontFamily: 'monospace' }}>
                     {hunkBadge}
                   </div>
                 )}
-                <div style={{ 
-                  fontSize: '11px', 
-                  color: 'var(--text-muted)', 
-                  marginLeft: '8px',
-                  minWidth: '60px',
-                  textAlign: 'right'
+                <div style={{
+                  fontSize: '10px',
+                  color: 'var(--text-dim)',
+                  flexShrink: 0,
+                  fontFamily: 'monospace'
                 }}>
-                  {file.is_binary ? 'Binary' : 
+                  {file.is_binary ? 'Binary' :
                    file.status === 'identical' ? 'Same' :
                    `${file.old_size} → ${file.new_size} B`}
                 </div>
@@ -208,54 +211,58 @@ export function FileTree({ files, activeFile, onFileSelect, hunkStats }: FileTre
                 const accepted = stats?.accepted ?? 0;
                 const rejected = stats?.rejected ?? 0;
                 const edited = stats?.edited ?? 0;
-                const hunkBadge = (accepted + rejected + edited) > 0
-                  ? `${accepted}✓ ${rejected}✗`
+                const totalHunks = accepted + rejected + edited;
+                const hunkBadge = totalHunks > 0
+                  ? `${accepted}✓ ${rejected}✗${edited > 0 ? ` ${edited}✎` : ''}`
                   : null;
                 return (
-                <div 
+                <div
                   key={file.relative_path}
                   onClick={() => onFileSelect(file)}
                   className={`file-item ${activeFile === file.relative_path ? 'active' : ''}`}
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    padding: '8px 12px', 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '6px 12px',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     background: isActive ? 'var(--active-bg)' : config.bg,
-                    marginBottom: '2px'
+                    marginBottom: '2px',
+                    gap: '8px'
                   }}
                 >
-                  <span style={{ 
-                    fontSize: '14px', 
-                    marginRight: '8px', 
+                  <span style={{
+                    fontSize: '12px',
+                    fontFamily: 'monospace',
                     color: config.color,
-                    minWidth: '16px',
-                    textAlign: 'center'
+                    minWidth: '14px',
+                    textAlign: 'center',
+                    fontWeight: '600',
+                    flexShrink: 0
                   }}>
                     {config.icon}
                   </span>
-                  <div style={{ 
-                    flex: 1, 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
-                    whiteSpace: 'nowrap' 
+                  <div style={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontSize: '13px'
                   }}>
                     {file.relative_path.split('/').pop()}
                   </div>
                   {hunkBadge && (
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px', minWidth: '60px', textAlign: 'right', fontFamily: 'monospace' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0, fontFamily: 'monospace' }}>
                       {hunkBadge}
                     </div>
                   )}
-                  <div style={{ 
-                    fontSize: '11px', 
-                    color: 'var(--text-muted)', 
-                    marginLeft: '8px',
-                    minWidth: '60px',
-                    textAlign: 'right'
+                  <div style={{
+                    fontSize: '10px',
+                    color: 'var(--text-dim)',
+                    flexShrink: 0,
+                    fontFamily: 'monospace'
                   }}>
-                    {file.is_binary ? 'Binary' : 
+                    {file.is_binary ? 'Binary' :
                      file.status === 'identical' ? 'Same' :
                      `${file.old_size} → ${file.new_size} B`}
                   </div>

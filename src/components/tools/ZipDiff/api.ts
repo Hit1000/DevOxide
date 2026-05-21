@@ -141,3 +141,7 @@ export async function clearFileEdit(
 ): Promise<void> {
   return invoke('clear_file_edit', { sessionId, relativePath });
 }
+
+export async function openFolder(path: string): Promise<void> {
+  return invoke('open_folder', { path });
+}

@@ -346,7 +346,9 @@ html.light .titlebar-button.close:hover {
 .cm-hunk-action.is-rejected { background: rgba(239,68,68,0.2); color: #f87171; }
 .cm-hunk-action.is-edited { background: rgba(251,191,36,0.2); color: #fbbf24; }
 
-.zip-diff-resize-handle { background: var(--border); }
+.zip-diff-resize-handle { background: var(--border); transition: background 0.15s; }
+.zip-diff-resize-handle:hover { background: var(--accent-blue); }
+.zip-diff-resize-handle-interactive:hover .resize-grip-dots { opacity: 1 !important; }
 
 /* Textarea / Input base */
 textarea, input[type="text"] {

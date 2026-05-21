@@ -6,6 +6,7 @@ import { IgnoreRulesPanel } from './ZipDiff/IgnoreRulesPanel';
 import { ExceptionRules } from './ZipDiff/ExceptionRules';
 import { ExportDialog } from './ZipDiff/ExportDialog';
 import { ProgressOverlay } from './ZipDiff/ProgressOverlay';
+import { ExceptionRulesDialog } from './ZipDiff/ExceptionRulesDialog';
 import { Icons } from '../Icons';
 import { usePersistedState } from '../../hooks/useStore';
 
@@ -26,7 +27,9 @@ export function ZipDiff() {
     setExceptionDialogOpen,
     handleDrop,
     handleBrowseOld,
+    handleBrowseOldFolder,
     handleBrowseNew,
+    handleBrowseNewFolder,
     handleIgnoreChange,
     handleRerunDiff,
     handleExceptionAdd,
@@ -86,13 +89,13 @@ export function ZipDiff() {
     }
   };
 
-  const startSidebarDrag = useCallback((event: React.MouseEvent) => {
+  const startSidebarDrag = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     const startX = event.clientX;
     const startWidth = sidebarWidth;
     let latestWidth = startWidth;
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: globalThis.MouseEvent) => {
       const next = Math.max(180, Math.min(300, startWidth + (moveEvent.clientX - startX)));
       latestWidth = next;
       setSidebarWidth(next);
@@ -101,23 +104,23 @@ export function ZipDiff() {
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      setPanelWidths(prev => ({
-        ...prev,
+      setPanelWidths({
+        ...panelWidths,
         sidebar: latestWidth,
-      }));
+      });
     };
 
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   }, [sidebarWidth, panelWidths, setPanelWidths]);
 
-  const startFileTreeDrag = useCallback((event: React.MouseEvent) => {
+  const startFileTreeDrag = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     const startX = event.clientX;
     const startWidth = fileTreeWidth;
     let latestWidth = startWidth;
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: globalThis.MouseEvent) => {
       const next = Math.max(200, Math.min(400, startWidth + (moveEvent.clientX - startX)));
       latestWidth = next;
       setFileTreeWidth(next);
@@ -126,10 +129,10 @@ export function ZipDiff() {
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      setPanelWidths(prev => ({
-        ...prev,
+      setPanelWidths({
+        ...panelWidths,
         fileTree: latestWidth,
-      }));
+      });
     };
 
     document.addEventListener('mousemove', onMove);
@@ -182,13 +185,24 @@ export function ZipDiff() {
                     <Icons.upload />
                   </div>
                   <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Drop OLD here</span>
-                  <button 
-                    onClick={handleBrowseOld}
-                    className="btn btn-sm"
-                    style={{ marginTop: '8px', padding: '4px 8px', fontSize: '11px' }}
-                  >
-                    Browse
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                    <button
+                      onClick={handleBrowseOld}
+                      className="btn btn-sm"
+                      style={{ padding: '4px 8px', fontSize: '11px' }}
+                      title="Browse for ZIP file"
+                    >
+                      ZIP
+                    </button>
+                    <button
+                      onClick={handleBrowseOldFolder}
+                      className="btn btn-sm"
+                      style={{ padding: '4px 8px', fontSize: '11px' }}
+                      title="Browse for folder"
+                    >
+                      Folder
+                    </button>
+                  </div>
                 </div>
                 {oldSourceLabel && (
                   <div
@@ -205,7 +219,8 @@ export function ZipDiff() {
                       whiteSpace: 'nowrap',
                       direction: 'rtl',
                       textAlign: 'left',
-                      cursor: 'help'
+                      cursor: 'help',
+                      fontFamily: 'monospace'
                     }}
                   >
                     {oldSourceLabel}
@@ -242,13 +257,24 @@ export function ZipDiff() {
                     <Icons.upload />
                   </div>
                   <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Drop NEW here</span>
-                  <button 
-                    onClick={handleBrowseNew}
-                    className="btn btn-sm"
-                    style={{ marginTop: '8px', padding: '4px 8px', fontSize: '11px' }}
-                  >
-                    Browse
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                    <button
+                      onClick={handleBrowseNew}
+                      className="btn btn-sm"
+                      style={{ padding: '4px 8px', fontSize: '11px' }}
+                      title="Browse for ZIP file"
+                    >
+                      ZIP
+                    </button>
+                    <button
+                      onClick={handleBrowseNewFolder}
+                      className="btn btn-sm"
+                      style={{ padding: '4px 8px', fontSize: '11px' }}
+                      title="Browse for folder"
+                    >
+                      Folder
+                    </button>
+                  </div>
                 </div>
                 {newSourceLabel && (
                   <div
@@ -265,7 +291,8 @@ export function ZipDiff() {
                       whiteSpace: 'nowrap',
                       direction: 'rtl',
                       textAlign: 'left',
-                      cursor: 'help'
+                      cursor: 'help',
+                      fontFamily: 'monospace'
                     }}
                   >
                     {newSourceLabel}
@@ -371,20 +398,21 @@ export function ZipDiff() {
         
         {/* Diff Panel */}
         <div className="zip-diff-diff-panel" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <DiffPanel 
+          <DiffPanel
             sessionId={sessionId}
             activeFile={activeFile}
             files={files}
             onHunkAction={handleHunkAction}
             onHunkStatsChange={handleHunkStatsChange}
             onOpenExport={() => setExportDialogOpen(true)}
+            onRerunDiff={handleRerunDiff}
             panelPercents={[panelWidths.diffLeft, panelWidths.diffMid, 100 - panelWidths.diffLeft - panelWidths.diffMid]}
             onPanelPercentsChange={next => {
-              setPanelWidths(prev => ({
-                ...prev,
+              setPanelWidths({
+                ...panelWidths,
                 diffLeft: next[0],
                 diffMid: next[1],
-              }));
+              });
             }}
           />
           
@@ -402,37 +430,10 @@ export function ZipDiff() {
           
           {/* Exception Dialog */}
           {exceptionDialogOpen && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-              <div style={{ background: 'var(--bg)', borderRadius: '8px', padding: '24px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
-                <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>Add Exception Rule</h3>
-                <div style={{ marginBottom: '16px' }}>
-                  <label htmlFor="exception-pattern" style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: 'var(--text-muted)' }}>Pattern:</label>
-                  <input 
-                    id="exception-pattern"
-                    type="text"
-                    placeholder="e.g., // Generated at .*"
-                    className="input"
-                    style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                  <button 
-                    onClick={() => setExceptionDialogOpen(false)}
-                    className="btn btn-outline"
-                    style={{ padding: '8px 16px', fontSize: '13px' }}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleExceptionAdd}
-                    className="btn btn-primary"
-                    style={{ padding: '8px 16px', fontSize: '13px' }}
-                  >
-                    Add Rule
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ExceptionRulesDialog
+              onAdd={(pattern, type) => { handleExceptionAdd(pattern, type); setExceptionDialogOpen(false); }}
+              onCancel={() => setExceptionDialogOpen(false)}
+            />
           )}
         </div>
       </div>

@@ -37,7 +37,8 @@ pub fn run() {
             export_result,
             close_diff_session,
             save_file_edit,
-            clear_file_edit
+            clear_file_edit,
+            open_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

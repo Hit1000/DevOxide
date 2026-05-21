@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView, Decoration, GutterMarker, gutter, WidgetType } from '@codemirror/view';
-import { RangeSetBuilder, StateField } from '@codemirror/state';
+import { RangeSetBuilder, StateField, Compartment, StateEffect } from '@codemirror/state';
 import { getFileDiff, setAllHunks, saveFileEdit, clearFileEdit, type DiffLine, type ResultLine, type Hunk } from './api';
 import { useScrollSync } from '../../../hooks/useScrollSync';
 import { useResizable } from '../../../hooks/useResizable';
@@ -284,13 +284,14 @@ export function DiffPanel({
   const [resultContent, setResultContent] = useState('');
   const [editDirty, setEditDirty] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editCompartmentRef = useRef<Compartment | null>(null);
 
   const [oldView, setOldView] = useState<EditorView | null>(null);
   const [newView, setNewView] = useState<EditorView | null>(null);
   const [resultView, setResultView] = useState<EditorView | null>(null);
 
   const [syncEnabled, setSyncEnabled] = useState(false);
-  const diffContainerRef = useRef<HTMLDivElement>(null);
+  const diffContainerRef = useRef<HTMLDivElement | null>(null);
   const initialPercents = panelPercents ?? [33, 33, 34];
   const { percents, setPercents, startDrag } = useResizable(
     diffContainerRef,
@@ -368,22 +369,22 @@ export function DiffPanel({
   );
   useScrollSync(syncViews);
 
-  if (!activeFile) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
-        Select a file to see the diff
-      </div>
-    );
-  }
+  // Toggle result panel editability via Compartment reconfiguration
+  useEffect(() => {
+    if (!resultView) return;
+    const compartment = editCompartmentRef.current ?? new Compartment();
+    editCompartmentRef.current = compartment;
+
+    resultView.dispatch({
+      effects: [
+        StateEffect.reconfigure.of([
+          compartment.of(EditorView.editable.of(editMode)),
+        ]),
+      ],
+    });
+  }, [editMode, resultView]);
 
   const file = files.find(f => f.relative_path === activeFile);
-  if (!file) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
-        File not found
-      </div>
-    );
-  }
 
   const diffLines: DiffLine[] = diff?.diff_lines ?? [];
   const oldLines = useMemo(() => buildOldLines(diffLines), [diffLines]);
@@ -404,6 +405,22 @@ export function DiffPanel({
   const oldValue = useMemo(() => oldLines.map(line => line.content).join('\n'), [oldLines]);
   const newValue = useMemo(() => newLines.map(line => line.content).join('\n'), [newLines]);
   const resultValue = useMemo(() => resultLines.map(line => line.content).join('\n'), [resultLines]);
+
+  if (!activeFile) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+        Select a file to see the diff
+      </div>
+    );
+  }
+
+  if (!file) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+        File not found
+      </div>
+    );
+  }
 
   const hunks: Hunk[] = diff?.hunks ?? [];
   const hunkStartLines = useMemo(() => {
@@ -617,7 +634,8 @@ export function DiffPanel({
                 whiteSpace: 'nowrap',
                 direction: 'rtl',
                 textAlign: 'left',
-                maxWidth: '100%'
+                flex: 1,
+                minWidth: 0
               }}
             >
               {activeFile}
@@ -768,9 +786,18 @@ export function DiffPanel({
                 {/* Divider */}
                 <div
                   onMouseDown={startDrag(0)}
-                  className="zip-diff-resize-handle"
-                  style={{ width: '4px', cursor: 'col-resize', background: 'var(--border)', flexShrink: 0 }}
-                />
+                  className="zip-diff-resize-handle zip-diff-resize-handle-interactive"
+                  style={{ width: '4px', cursor: 'col-resize', background: 'var(--border)', flexShrink: 0, position: 'relative' }}
+                >
+                  <div style={{
+                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                    display: 'flex', flexDirection: 'column', gap: '2px', opacity: 0, transition: 'opacity 0.15s',
+                  }} className="resize-grip-dots">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--accent-blue)' }} />
+                    ))}
+                  </div>
+                </div>
 
                 {/* New File Panel */}
                 <div style={{ 
@@ -822,9 +849,18 @@ export function DiffPanel({
                 {/* Divider */}
                 <div
                   onMouseDown={startDrag(1)}
-                  className="zip-diff-resize-handle"
-                  style={{ width: '4px', cursor: 'col-resize', background: 'var(--border)', flexShrink: 0 }}
-                />
+                  className="zip-diff-resize-handle zip-diff-resize-handle-interactive"
+                  style={{ width: '4px', cursor: 'col-resize', background: 'var(--border)', flexShrink: 0, position: 'relative' }}
+                >
+                  <div style={{
+                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                    display: 'flex', flexDirection: 'column', gap: '2px', opacity: 0, transition: 'opacity 0.15s',
+                  }} className="resize-grip-dots">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--accent-blue)' }} />
+                    ))}
+                  </div>
+                </div>
 
                 {/* Result Panel */}
                 <div style={{ 
@@ -856,7 +892,10 @@ export function DiffPanel({
                       value={resultValue}
                       height="100%"
                       style={{ height: '100%', flex: 1, overflow: 'hidden' }}
-                      onCreateEditor={setResultView}
+                      onCreateEditor={(view) => {
+                        setResultView(view);
+                        editCompartmentRef.current = new Compartment();
+                      }}
                       onChange={editMode ? handleSaveEdit : undefined}
                       extensions={buildDiffExtensions(resultLines, hunks, {
                         showDiffGutter: false,
@@ -870,9 +909,9 @@ export function DiffPanel({
                       basicSetup={{
                         lineNumbers: false,
                         foldGutter: false,
-                        highlightActiveLine: false,
+                        highlightActiveLine: editMode,
                         highlightActiveLineGutter: false,
-                        bracketMatching: false,
+                        bracketMatching: editMode,
                         autocompletion: false,
                       }}
                     />
