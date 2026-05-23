@@ -3,6 +3,7 @@ import { Sidebar, tools } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { TitleBar } from './components/TitleBar';
 import { usePersistedState } from './hooks/useStore';
+import { useWindowState } from './hooks/useWindowState';
 
 import { Notepad }           from './components/tools/Notepad';
 import { RegexTester }       from './components/tools/RegexTester';
@@ -81,6 +82,7 @@ function renderTool(id: string) {
 export default function App() {
   const [activeTool, setActiveTool, toolLoaded] = usePersistedState<string | null>('active_tool', null);
   const [theme, setThemeState, themeLoaded] = usePersistedState<'dark' | 'light'>('theme', 'dark');
+  useWindowState();
 
   // Apply theme class + favicon whenever theme changes
   useEffect(() => {
