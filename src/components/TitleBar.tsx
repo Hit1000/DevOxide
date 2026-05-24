@@ -21,7 +21,10 @@ export function TitleBar() {
 
   return (
     <div className="titlebar" data-tauri-drag-region onMouseDown={startDrag}>
-      <div style={{ flex: 1, height: '100%' }} />
+      <div className="titlebar-brand" data-tauri-drag-region>
+        <span className="titlebar-brand-logo" aria-hidden="true" />
+        <span className="titlebar-brand-text">DevOxide</span>
+      </div>
       <div className="titlebar-button" onMouseDown={stopDrag} onClick={minimize} data-tauri-drag-region="false">
         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10">
           <rect x="1" y="4" width="8" height="1" fill="currentColor" />

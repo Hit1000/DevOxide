@@ -82,6 +82,7 @@ function renderTool(id: string) {
 export default function App() {
   const [activeTool, setActiveTool, toolLoaded] = usePersistedState<string | null>('active_tool', null);
   const [theme, setThemeState, themeLoaded] = usePersistedState<'dark' | 'light'>('theme', 'dark');
+  const [sidebarCollapsed, setSidebarCollapsed] = usePersistedState<boolean>('sidebar_collapsed', false);
   useWindowState();
 
   // Apply theme class + favicon whenever theme changes
@@ -115,7 +116,13 @@ export default function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
       <TitleBar />
       <div className="app" style={{ flex: 1, height: 'auto', width: '100%' }}>
-        <Sidebar active={activeTool ?? ''} onSelect={id => setActiveTool(id)} theme={theme} />
+        <Sidebar
+          active={activeTool ?? ''}
+          onSelect={id => setActiveTool(id)}
+          theme={theme}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
         <div className="main">
           <TopBar
             toolName={toolConfig ? toolConfig.name : 'Dev Oxide'}
