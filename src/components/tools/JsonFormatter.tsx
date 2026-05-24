@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Editor } from '../shared/Editor';
 import { Icons } from '../Icons';
 import { CopyBtn } from '../TopBar';
-import { useTauri } from '../../hooks/useTauri';
 import { usePersistedState } from '../../hooks/useStore';
 
 // ── Client-side JSON repair (mirrors Tools/lib/parser/jsonParser.ts) ──────────
@@ -220,9 +219,52 @@ const SAMPLE = `{
   }
 }`;
 
+type Tab = { id: string; name: string; content: string; isAutoNamed?: boolean };
+
+const generateId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+const getNextTabNumber = (tabs: Tab[]) => {
+  const used = new Set<number>();
+  for (const tab of tabs) {
+    if (tab.isAutoNamed === false) continue;
+    const m = tab.name.match(/^New Tab\s+(\d+)$/i);
+    if (m) used.add(Number(m[1]));
+  }
+  let n = 1;
+  while (used.has(n)) n++;
+  return n;
+};
+
+const migrateTabNames = (tabs: Tab[]) => {
+  const result: Tab[] = [];
+  for (const tab of tabs) {
+    if (/^New Tab$/i.test(tab.name) && tab.isAutoNamed !== false) {
+      const n = getNextTabNumber(result.concat(tabs.slice(result.length)));
+      result.push({ ...tab, name: `New Tab ${n}`, isAutoNamed: true });
+    } else {
+      result.push(tab);
+    }
+  }
+  return result;
+};
+
+const newTab = (tabs: Tab[]): Tab => {
+  const n = getNextTabNumber(tabs);
+  return { id: generateId(), name: `New Tab ${n}`, content: '', isAutoNamed: true };
+};
+
+const makeDefaultTabsState = () => {
+  const id = generateId();
+  return { tabs: [{ id, name: 'New Tab 1', content: '', isAutoNamed: true }] as Tab[], activeTabId: id };
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export function JsonFormatter() {
-  const [input, setInput, inputLoaded]       = usePersistedState<string>('json_formatter_input', '', 500);
+  const [tabsData, setTabsData, tabsLoaded]  = usePersistedState<{ tabs: Tab[]; activeTabId: string }>(
+    'json_formatter_tabs',
+    makeDefaultTabsState(),
+    500
+  );
   const [output, setOutput]                  = useState('');
   const [result, setResult]                  = useState<ParseResult | null>(null);
   const [indent, setIndent, indentLoaded]    = usePersistedState<number>('json_formatter_indent', 2);
@@ -231,6 +273,48 @@ export function JsonFormatter() {
   const [showOptions, setShowOptions]        = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const tabs = Array.isArray(tabsData?.tabs) && tabsData.tabs.length > 0
+    ? tabsData.tabs
+    : makeDefaultTabsState().tabs;
+  const activeId = tabsData?.activeTabId || tabs[0].id;
+
+  useEffect(() => {
+    if (!tabsLoaded) return;
+    const seen = new Set<string>();
+    let deduped = tabs.filter(t => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+
+    // Migrate old "New Tab" names without numbers
+    const migrated = migrateTabNames(deduped);
+
+    const safeActive = migrated.find(t => t.id === activeId)
+      ? activeId
+      : migrated[0]?.id ?? '';
+
+    const nameChanged = migrated.some((t, i) => t.name !== tabsData?.tabs?.[i]?.name);
+
+    if (
+      migrated.length !== (tabsData?.tabs?.length || 0) ||
+      safeActive !== tabsData?.activeTabId ||
+      nameChanged
+    ) {
+      setTabsData({ tabs: migrated, activeTabId: safeActive });
+    }
+  }, [tabsLoaded, tabsData, tabs, activeId]);
+
+  const activeTab = tabs.find(t => t.id === activeId) ?? tabs[0];
+  const input = activeTab?.content ?? '';
+
+  const setInput = useCallback((val: string) => {
+    setTabsData({
+      tabs: tabs.map(t => t.id === activeId ? { ...t, content: val } : t),
+      activeTabId: activeId,
+    });
+  }, [activeId, tabs]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -259,6 +343,82 @@ export function JsonFormatter() {
   const loadSample = () => setInput(SAMPLE);
   const clearAll   = () => { setInput(''); setOutput(''); setResult(null); };
 
+  const addTab = () => {
+    const tab = newTab(tabs);
+    setTabsData({ tabs: [...tabs, tab], activeTabId: tab.id });
+  };
+
+  const closeTab = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (tabs.length === 1) return;
+    const idx = tabs.findIndex(t => t.id === id);
+    const newTabs = tabs.filter(t => t.id !== id);
+    const newActive = activeId === id ? newTabs[Math.max(0, idx - 1)].id : activeId;
+    setTabsData({ tabs: newTabs, activeTabId: newActive });
+  };
+
+  const [dragState, setDragState] = useState<{ sourceId: string; overIdx: number } | null>(null);
+  const tabRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const handlePointerDown = (e: React.PointerEvent, id: string) => {
+    if (!(e.target as HTMLElement).dataset.grip) return;
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    const sourceIdx = tabs.findIndex(t => t.id === id);
+    setDragState({ sourceId: id, overIdx: sourceIdx });
+
+    const onMove = (ev: PointerEvent) => {
+      for (const [tabId, el] of tabRefs.current.entries()) {
+        const rect = el.getBoundingClientRect();
+        if (ev.clientX >= rect.left && ev.clientX <= rect.right) {
+          const idx = tabs.findIndex(t => t.id === tabId);
+          setDragState(prev => prev ? { ...prev, overIdx: idx } : null);
+          break;
+        }
+      }
+    };
+
+    const onUp = () => {
+      setDragState(prev => {
+        if (prev) {
+          const srcIdx = tabs.findIndex(t => t.id === prev.sourceId);
+          const tgtIdx = prev.overIdx;
+          if (srcIdx !== -1 && tgtIdx !== -1 && srcIdx !== tgtIdx) {
+            const newTabs = [...tabs];
+            const [moved] = newTabs.splice(srcIdx, 1);
+            newTabs.splice(tgtIdx, 0, moved);
+            setTabsData({ tabs: newTabs, activeTabId: activeId });
+          }
+        }
+        return null;
+      });
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const saveEdit = () => {
+    if (editingId) {
+      setTabsData({
+        tabs: tabs.map(t => t.id === editingId ? { ...t, name: editValue.trim() || 'Untitled', isAutoNamed: false } : t),
+        activeTabId: activeId,
+      });
+      setEditingId(null);
+    }
+  };
+
+  const scrollTabs = (dir: 1 | -1) => {
+    if (scrollRef.current) scrollRef.current.scrollBy({ left: dir * 150, behavior: 'smooth' });
+  };
+
   // Stats
   const stats = React.useMemo(() => {
     if (!output) return null;
@@ -277,10 +437,68 @@ export function JsonFormatter() {
     } catch { return null; }
   }, [output]);
 
-  if (!inputLoaded || !indentLoaded || !sortLoaded || !minifyLoaded) return null;
+  if (!tabsLoaded || !indentLoaded || !sortLoaded || !minifyLoaded) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); const r = parseAndFormat(input, indent, sortKeys, minify); setOutput(r.formatted); setResult(r); } }}>
+      {/* Tabs */}
+      <div style={{ display: 'flex', alignItems: 'center', background: 'var(--sidebar-bg)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        {tabs.length > 5 && (
+          <button className="icon-btn" style={{ width: 24, height: 37, borderRadius: 0 }} onClick={() => scrollTabs(-1)}>‹</button>
+        )}
+        <div className="tab-bar" ref={scrollRef} style={{ borderBottom: 'none', background: 'transparent', flex: 1, padding: '0 4px' }}>
+          {tabs.map((tab, idx) => (
+            <div
+              key={tab.id}
+              ref={el => { if (el) tabRefs.current.set(tab.id, el); else tabRefs.current.delete(tab.id); }}
+              className={`tab-item ${tab.id === activeId ? 'active' : ''}`}
+              onClick={() => setTabsData({ tabs, activeTabId: tab.id })}
+              onDoubleClick={() => { setEditingId(tab.id); setEditValue(tab.name); }}
+              onPointerDown={e => handlePointerDown(e, tab.id)}
+              style={{
+                opacity: dragState?.sourceId === tab.id ? 0.4 : 1,
+                outline: dragState && dragState.sourceId !== tab.id && dragState.overIdx === idx
+                  ? '2px solid var(--accent)' : 'none',
+                transition: 'opacity 0.1s',
+              }}
+            >
+              <span data-grip="true" style={{ fontSize: 13, marginRight: 2, cursor: 'grab', touchAction: 'none' }}>⠿</span>
+              {editingId === tab.id ? (
+                <input
+                  autoFocus
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  onBlur={saveEdit}
+                  onClick={e => e.stopPropagation()}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') saveEdit();
+                    if (e.key === 'Escape') setEditingId(null);
+                  }}
+                  style={{
+                    background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--accent)',
+                    borderRadius: 4, padding: '0 4px', fontSize: 12, outline: 'none',
+                    width: Math.min(150, Math.max(60, editValue.length * 8)),
+                  }}
+                />
+              ) : (
+                <span className="tab-item-name" title={tab.name}>{tab.name}</span>
+              )}
+              {tabs.length > 1 && (
+                <span
+                  onClick={e => closeTab(tab.id, e)}
+                  style={{ marginLeft: 4, color: 'var(--text-dim)', fontSize: 14, lineHeight: 1, cursor: 'pointer' }}
+                >×</span>
+              )}
+            </div>
+          ))}
+          <button className="tab-add" onClick={addTab}>
+            <span style={{ fontSize: 14 }}>+</span> Add
+          </button>
+        </div>
+        {tabs.length > 5 && (
+          <button className="icon-btn" style={{ width: 24, height: 37, borderRadius: 0 }} onClick={() => scrollTabs(1)}>›</button>
+        )}
+      </div>
       {/* Toolbar */}
       <div className="toolbar" style={{ position: 'relative' }}>
         <button className="btn btn-primary" onClick={() => { const r = parseAndFormat(input, indent, sortKeys, minify); setOutput(r.formatted); setResult(r); }}>

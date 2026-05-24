@@ -3,50 +3,87 @@ import { Editor } from '../shared/Editor';
 import { CopyBtn } from '../TopBar';
 import { usePersistedState } from '../../hooks/useStore';
 
-interface Tab { id: string; name: string; content: string; }
+interface Tab { id: string; name: string; content: string; isAutoNamed?: boolean }
 
 const generateId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-const newTab = (): Tab => ({
-  id: generateId(),
-  name: 'New Tab',
-  content: '',
-});
-
-const DEFAULT_STATE = {
-  tabs: [{ id: generateId(), name: 'New Tab', content: '' }] as Tab[],
-  activeTabId: '',
+const getNextTabNumber = (tabs: Tab[]) => {
+  const used = new Set<number>();
+  for (const tab of tabs) {
+    if (tab.isAutoNamed === false) continue;
+    const m = tab.name.match(/^New Tab\s+(\d+)$/i);
+    if (m) used.add(Number(m[1]));
+  }
+  let n = 1;
+  while (used.has(n)) n++;
+  return n;
 };
-DEFAULT_STATE.activeTabId = DEFAULT_STATE.tabs[0].id;
+
+const migrateTabNames = (tabs: Tab[]) => {
+  const result: Tab[] = [];
+  for (const tab of tabs) {
+    if (/^New Tab$/i.test(tab.name) && tab.isAutoNamed !== false) {
+      // assign a number using already-migrated result to avoid collisions
+      const n = getNextTabNumber(result.concat(tabs.slice(result.length)));
+      result.push({ ...tab, name: `New Tab ${n}`, isAutoNamed: true });
+    } else {
+      result.push(tab);
+    }
+  }
+  return result;
+};
+
+const newTab = (tabs: Tab[]): Tab => {
+  const n = getNextTabNumber(tabs);
+  return { id: generateId(), name: `New Tab ${n}`, content: '', isAutoNamed: true };
+};
+
+const makeDefaultTabsState = () => {
+  const id = generateId();
+  return { tabs: [{ id, name: 'New Tab 1', content: '', isAutoNamed: true }] as Tab[], activeTabId: id };
+};
 
 export function Notepad() {
   const [tabsData, setTabsData, loaded] = usePersistedState<{ tabs: Tab[]; activeTabId: string }>(
     'notepad_tabs',
-    DEFAULT_STATE,
+    makeDefaultTabsState(),
     500
   );
 
   const tabs = Array.isArray(tabsData?.tabs) && tabsData.tabs.length > 0
     ? tabsData.tabs
-    : DEFAULT_STATE.tabs;
+    : makeDefaultTabsState().tabs;
   const activeId = tabsData?.activeTabId || tabs[0].id;
 
-  // Heal corrupt state on load
+  // next tab number is computed on demand from current tabs
+
+  // Heal corrupt state on load and migrate old unnumbered names
   useEffect(() => {
     if (!loaded) return;
     const seen = new Set<string>();
-    const deduped = tabs.filter(t => {
+    let deduped = tabs.filter(t => {
       if (seen.has(t.id)) return false;
       seen.add(t.id);
       return true;
     });
-    const safeActive = deduped.find(t => t.id === activeId)
+
+    // Migrate old "New Tab" names without numbers
+    const migrated = migrateTabNames(deduped);
+
+    const safeActive = migrated.find(t => t.id === activeId)
       ? activeId
-      : deduped[0]?.id ?? '';
-    if (deduped.length !== (tabsData?.tabs?.length || 0) || safeActive !== tabsData?.activeTabId) {
-      setTabsData({ tabs: deduped, activeTabId: safeActive });
+      : migrated[0]?.id ?? '';
+
+    const nameChanged = migrated.some((t, i) => t.name !== tabsData?.tabs?.[i]?.name);
+
+    if (
+      migrated.length !== (tabsData?.tabs?.length || 0) ||
+      safeActive !== tabsData?.activeTabId ||
+      nameChanged
+    ) {
+      setTabsData({ tabs: migrated, activeTabId: safeActive });
     }
-  }, [loaded]);
+  }, [loaded, tabsData, tabs, activeId]);
 
   const activeTab = tabs.find(t => t.id === activeId) ?? tabs[0];
   const text = activeTab?.content ?? '';
@@ -56,7 +93,7 @@ export function Notepad() {
   const lineCount = text.split('\n').length;
 
   const addTab = () => {
-    const tab = newTab();
+    const tab = newTab(tabs);
     setTabsData({ tabs: [...tabs, tab], activeTabId: tab.id });
   };
 
@@ -133,7 +170,7 @@ export function Notepad() {
   const saveEdit = () => {
     if (editingId) {
       setTabsData({
-        tabs: tabs.map(t => t.id === editingId ? { ...t, name: editValue.trim() || 'Untitled' } : t),
+        tabs: tabs.map(t => t.id === editingId ? { ...t, name: editValue.trim() || 'Untitled', isAutoNamed: false } : t),
         activeTabId: activeId,
       });
       setEditingId(null);
