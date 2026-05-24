@@ -1,12 +1,12 @@
 # Graph Report - D:\Web projects\DevOxide  (2026-05-24)
 
 ## Corpus Check
-- 64 files · ~61,763 words
+- 64 files · ~64,020 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 244 nodes · 229 edges · 54 communities detected
-- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 22 edges (avg confidence: 0.8)
+- 256 nodes · 252 edges · 55 communities detected
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 23 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -64,30 +64,31 @@
 - [[_COMMUNITY_Community 51|Community 51]]
 - [[_COMMUNITY_Community 52|Community 52]]
 - [[_COMMUNITY_Community 53|Community 53]]
+- [[_COMMUNITY_Community 54|Community 54]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `open_session()` - 7 edges
 2. `build_result_lines()` - 5 edges
 3. `get_diff()` - 5 edges
-4. `buildDiffResult()` - 4 edges
-5. `handleKeyDown()` - 3 edges
-6. `parseAndFormat()` - 3 edges
-7. `decode()` - 3 edges
-8. `generateId()` - 3 edges
-9. `newTab()` - 3 edges
-10. `now()` - 3 edges
+4. `generateId()` - 4 edges
+5. `newTab()` - 4 edges
+6. `generateId()` - 4 edges
+7. `newTab()` - 4 edges
+8. `now()` - 4 edges
+9. `buildDiffResult()` - 4 edges
+10. `handleKeyDown()` - 3 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `copy()` --calls--> `extract_zip()`  [INFERRED]
   D:\Web projects\DevOxide\src\components\TopBar.tsx → D:\Web projects\DevOxide\src-tauri\src\commands\zip_diff\session.rs
+- `generateId()` --calls--> `now()`  [INFERRED]
+  D:\Web projects\DevOxide\src\components\tools\JsonFormatter.tsx → D:\Web projects\DevOxide\src\components\tools\TimestampConverter.tsx
 - `open_diff_session()` --calls--> `open_session()`  [INFERRED]
   D:\Web projects\DevOxide\src-tauri\src\commands\zip_diff\commands.rs → D:\Web projects\DevOxide\src-tauri\src\commands\zip_diff\session.rs
 - `get_file_diff()` --calls--> `get_diff()`  [INFERRED]
   D:\Web projects\DevOxide\src-tauri\src\commands\zip_diff\commands.rs → D:\Web projects\DevOxide\src-tauri\src\commands\zip_diff\session.rs
 - `clear()` --calls--> `decode_jwt()`  [INFERRED]
   D:\Web projects\DevOxide\src\components\tools\DiffTool.tsx → D:\Web projects\DevOxide\src-tauri\src\commands\encoding\jwt.rs
-- `copyDiff()` --calls--> `generateUnifiedDiffText()`  [INFERRED]
-  D:\Web projects\DevOxide\src\components\tools\DiffTool.tsx → D:\Web projects\DevOxide\src\lib\diffEngine.ts
 
 ## Communities
 
@@ -96,36 +97,36 @@ Cohesion: 0.1
 Nodes (31): clear_file_edit(), close_diff_session(), export_result(), get_file_diff(), open_diff_session(), preview_file_result(), save_file_edit(), set_all_hunks() (+23 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.1
-Nodes (11): buildDiffResult(), compareText(), compareTextRust(), generateUnifiedDiffText(), splitLines(), clear(), copyDiff(), decode_jwt() (+3 more)
+Cohesion: 0.15
+Nodes (10): addTab(), formatWithTokens(), generateId(), getErrorLocation(), getNextTabNumber(), handleKeyDown(), makeDefaultTabsState(), migrateTabNames() (+2 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.12
-Nodes (6): setAllHunks(), async(), DiffMarker, handler(), HunkBarWidget, LineNumberMarker
+Cohesion: 0.14
+Nodes (10): addTab(), generateId(), getNextTabNumber(), handleKeyDown(), makeDefaultTabsState(), migrateTabNames(), newTab(), convert_timestamp() (+2 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.12
-Nodes (2): openFolder(), handleOpenFolder()
+Nodes (6): setAllHunks(), async(), DiffMarker, handler(), HunkBarWidget, LineNumberMarker
 
 ### Community 4 - "Community 4"
-Cohesion: 0.15
-Nodes (6): addTab(), generateId(), newTab(), convert_timestamp(), TimestampResult, now()
+Cohesion: 0.12
+Nodes (2): openFolder(), handleOpenFolder()
 
 ### Community 5 - "Community 5"
-Cohesion: 0.15
-Nodes (12): DiffLine, ExportSummary, FileDiff, FileNode, FileStatus, Hunk, HunkState, LineKind (+4 more)
+Cohesion: 0.13
+Nodes (5): clear(), decode_jwt(), JwtResult, decode(), url_decode()
 
 ### Community 6 - "Community 6"
-Cohesion: 0.32
-Nodes (3): formatWithTokens(), getErrorLocation(), parseAndFormat()
+Cohesion: 0.15
+Nodes (12): DiffLine, ExportSummary, FileDiff, FileNode, FileStatus, Hunk, HunkState, LineKind (+4 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.38
 Nodes (4): changeTextSize(), copy(), handleKeyDown(), handleToggle()
 
 ### Community 8 - "Community 8"
-Cohesion: 0.33
-Nodes (0): 
+Cohesion: 0.43
+Nodes (6): buildDiffResult(), compareText(), compareTextRust(), generateUnifiedDiffText(), splitLines(), copyDiff()
 
 ### Community 9 - "Community 9"
 Cohesion: 0.33
@@ -307,60 +308,64 @@ Nodes (0):
 Cohesion: 1.0
 Nodes (0): 
 
+### Community 54 - "Community 54"
+Cohesion: 1.0
+Nodes (0): 
+
 ## Knowledge Gaps
 - **25 isolated node(s):** `JwtResult`, `TolerantResult`, `ValidationError`, `ValidationResult`, `ColorResult` (+20 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 23`** (2 nodes): `CopyButton()`, `CopyButton.tsx`
+- **Thin community `Community 23`** (2 nodes): `Sidebar.tsx`, `handleSelect()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 24`** (2 nodes): `StatusBar.tsx`, `StatusBar()`
+- **Thin community `Community 24`** (2 nodes): `TitleBar.tsx`, `TitleBar()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 25`** (2 nodes): `run()`, `ColorConverter.tsx`
+- **Thin community `Community 25`** (2 nodes): `CopyButton()`, `CopyButton.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 26`** (2 nodes): `HashGenerator.tsx`, `generate()`
+- **Thin community `Community 26`** (2 nodes): `StatusBar.tsx`, `StatusBar()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 27`** (2 nodes): `UrlEncoder.tsx`, `run()`
+- **Thin community `Community 27`** (2 nodes): `run()`, `ColorConverter.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 28`** (2 nodes): `ExceptionRulesDialog.tsx`, `handleAdd()`
+- **Thin community `Community 28`** (2 nodes): `HashGenerator.tsx`, `generate()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 29`** (2 nodes): `useZipDiff.ts`, `useZipDiff()`
+- **Thin community `Community 29`** (2 nodes): `UrlEncoder.tsx`, `run()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 30`** (2 nodes): `useResizable.ts`, `useResizable()`
+- **Thin community `Community 30`** (2 nodes): `ExceptionRulesDialog.tsx`, `handleAdd()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 31`** (2 nodes): `useScrollSync.ts`, `useScrollSync()`
+- **Thin community `Community 31`** (2 nodes): `useZipDiff.ts`, `useZipDiff()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 32`** (2 nodes): `useTauri.ts`, `useTauri()`
+- **Thin community `Community 32`** (2 nodes): `useResizable.ts`, `useResizable()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 33`** (2 nodes): `main()`, `build.rs`
+- **Thin community `Community 33`** (2 nodes): `useScrollSync.ts`, `useScrollSync()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 34`** (2 nodes): `convert_json()`, `convert.rs`
+- **Thin community `Community 34`** (2 nodes): `useTauri.ts`, `useTauri()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 35`** (2 nodes): `minify.rs`, `minify_json()`
+- **Thin community `Community 35`** (2 nodes): `main()`, `build.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 36`** (2 nodes): `markdown.rs`, `render_markdown()`
+- **Thin community `Community 36`** (2 nodes): `convert_json()`, `convert.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 37`** (1 nodes): `postcss.config.js`
+- **Thin community `Community 37`** (2 nodes): `minify.rs`, `minify_json()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 38`** (1 nodes): `tailwind.config.js`
+- **Thin community `Community 38`** (2 nodes): `markdown.rs`, `render_markdown()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 39`** (1 nodes): `vite.config.ts`
+- **Thin community `Community 39`** (1 nodes): `postcss.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 40`** (1 nodes): `App.tsx`
+- **Thin community `Community 40`** (1 nodes): `tailwind.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 41`** (1 nodes): `main.tsx`
+- **Thin community `Community 41`** (1 nodes): `vite.config.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 42`** (1 nodes): `vite-env.d.ts`
+- **Thin community `Community 42`** (1 nodes): `App.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 43`** (1 nodes): `Icons.tsx`
+- **Thin community `Community 43`** (1 nodes): `main.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 44`** (1 nodes): `Sidebar.tsx`
+- **Thin community `Community 44`** (1 nodes): `vite-env.d.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 45`** (1 nodes): `Editor.tsx`
+- **Thin community `Community 45`** (1 nodes): `Icons.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 46`** (1 nodes): `FileTree.tsx`
+- **Thin community `Community 46`** (1 nodes): `Editor.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 47`** (1 nodes): `ProgressOverlay.tsx`
+- **Thin community `Community 47`** (1 nodes): `FileTree.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 48`** (1 nodes): `mod.rs`
+- **Thin community `Community 48`** (1 nodes): `ProgressOverlay.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 49`** (1 nodes): `mod.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -372,21 +377,23 @@ Nodes (0):
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 53`** (1 nodes): `mod.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 54`** (1 nodes): `mod.rs`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `setAllHunks()` connect `Community 2` to `Community 3`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `extract_zip()` connect `Community 0` to `Community 7`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Why does `copy()` connect `Community 7` to `Community 0`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **Why does `now()` connect `Community 2` to `Community 1`?**
+  _High betweenness centrality (0.013) - this node is a cross-community bridge._
+- **Why does `generateId()` connect `Community 1` to `Community 2`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **What connects `JwtResult`, `TolerantResult`, `ValidationError` to the rest of the system?**
   _25 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.1 - nodes in this community are weakly interconnected._
-- **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.14 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
   _Cohesion score 0.12 - nodes in this community are weakly interconnected._
