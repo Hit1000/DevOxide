@@ -1,6 +1,6 @@
-# Dev Oxide Shortcuts
+# DevOxide Shortcuts
 
-Here is a list of all the keyboard shortcuts available in Dev Oxide to improve your productivity:
+Here is a list of all the keyboard shortcuts available in DevOxide to improve your productivity:
 
 ## Global Shortcuts
 These shortcuts work from anywhere within the application.

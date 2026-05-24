@@ -20,7 +20,7 @@ import { Icons }             from './components/Icons';
 
 // Home dashboard
 function Home({ onSelect }: { onSelect: (id: string) => void }) {
-  const categories = Array.from(new Set(tools.map(t => t.category)));
+  const categories = Array.from(new Set(tools.map(t => t.category))).filter(c => c && c.length > 0);
   const iconColors: Record<string, string> = {
     'TEXT TOOLS': 'purple', 'JSON TOOLS': 'purple', 'ENCODING TOOLS': 'orange',
     'DIFF TOOLS': 'blue', 'MISC': 'blue',
@@ -30,7 +30,7 @@ function Home({ onSelect }: { onSelect: (id: string) => void }) {
       <div>
         <div style={{ marginBottom: 6 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-            Dev Oxide <span style={{ fontSize: 12, background: 'var(--btn-secondary-bg)', border: '1px solid var(--border-light)', borderRadius: 99, padding: '2px 10px', fontWeight: 400, color: 'var(--text-muted)' }}>v0.1 beta</span>
+            DevOxide <span style={{ fontSize: 12, background: 'var(--btn-secondary-bg)', border: '1px solid var(--border-light)', borderRadius: 99, padding: '2px 10px', fontWeight: 400, color: 'var(--text-muted)' }}>v0.1 beta</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>11 tools available · offline, local-first</p>
         </div>
@@ -113,11 +113,11 @@ export default function App() {
   const toolConfig = tools.find(t => t.id === activeTool);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}>
       <TitleBar />
       <div className="app" style={{ flex: 1, height: 'auto', width: '100%' }}>
         <Sidebar
-          active={activeTool ?? ''}
+          active={activeTool}
           onSelect={id => setActiveTool(id)}
           theme={theme}
           collapsed={sidebarCollapsed}
@@ -125,7 +125,7 @@ export default function App() {
         />
         <div className="main">
           <TopBar
-            toolName={toolConfig ? toolConfig.name : 'Dev Oxide'}
+            toolName={toolConfig ? toolConfig.name : 'DevOxide'}
             hint={toolConfig ? toolConfig.hint : 'CMD+K for commands'}
             theme={theme}
             onToggleTheme={toggleTheme}

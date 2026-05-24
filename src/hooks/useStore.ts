@@ -4,28 +4,31 @@ import { load, Store } from '@tauri-apps/plugin-store';
 // ── Singleton store instance ──────────────────────────────────────────────────
 let storeInstance: Store | null = null;
 let storePromise: Promise<Store> | null = null;
+const STORE_FILE = 'session.json';
 
 export async function getStore(): Promise<Store> {
   if (storeInstance) return storeInstance;
   if (storePromise) return storePromise;
 
-  storePromise = load('devkit.json', { autoSave: 100, defaults: {} })
-    .then(async s => {
-      console.log('Store loaded successfully:', s);
-      storeInstance = s;
-      // Make sure a missing store file gets recreated on first launch.
-      try {
-        await s.save();
-      } catch (saveErr) {
-        console.error('Failed to seed store file:', saveErr);
-      }
-      return s;
-    })
-    .catch(err => {
-      console.error('Failed to load store:', err);
-      storePromise = null; // reset so caller can retry
-      throw err;
-    });
+  storePromise = (async () => {
+    const s = await load(STORE_FILE, { autoSave: 100, defaults: {} });
+    console.log('Store loaded successfully:', s);
+    storeInstance = s;
+    // Make sure a missing store file gets recreated on first launch.
+    try {
+      await s.save();
+    } catch (saveErr) {
+      console.error('Failed to seed store file:', saveErr);
+    }
+    return s;
+  })();
+
+  storePromise = storePromise.catch(err => {
+    console.error('Failed to load store:', err);
+    storePromise = null; // reset so caller can retry
+    throw err;
+  });
+
   return storePromise;
 }
 

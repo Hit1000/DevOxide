@@ -1,7 +1,7 @@
 [package]
 name = "DevOxide"
 version = "0.1.0"
-description = "A Dev Oxide App"
+description = "A DevOxide App"
 authors = ["you"]
 edition = "2021"
 

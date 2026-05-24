@@ -1,7 +1,7 @@
-# Graph Report - D:\Web projects\DevOxide  (2026-05-24)
+# Graph Report - D:\Web projects\DevOxide  (2026-05-25)
 
 ## Corpus Check
-- 64 files · ~64,020 words
+- 64 files · ~65,023 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary

@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Icons } from './Icons';
 
 export const tools = [
+  { id: 'Home',      name: 'Home',           icon: 'home',      category: '',               hint: '' },
   { id: 'notepad',   name: 'Notepad',        icon: 'notepad',   category: 'TEXT TOOLS',     hint: 'CMD+S to save' },
   { id: 'regex',     name: 'Regex Tester',   icon: 'regex',     category: 'TEXT TOOLS',     hint: 'Live match highlighting' },
   { id: 'markdown',  name: 'Markdown',       icon: 'markdown',  category: 'TEXT TOOLS',     hint: 'CMD+S to save' },
@@ -16,8 +17,8 @@ export const tools = [
 ];
 
 interface SidebarProps {
-  active: string;
-  onSelect: (id: string) => void;
+  active: string | null;
+  onSelect: (id: string | null) => void;
   theme?: 'dark' | 'light';
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -44,7 +45,7 @@ export function Sidebar({ active, onSelect, theme = 'dark', collapsed, onToggleC
     });
   }, [normalizedQuery]);
 
-  const handleSelect = (id: string) => {
+  const handleSelect = (id: string | null) => {
     setSearch('');
     setFocused(false);
     setHovered(false);
@@ -165,10 +166,10 @@ export function Sidebar({ active, onSelect, theme = 'dark', collapsed, onToggleC
                     <button
                       key={t.id}
                       className="icon-btn"
-                      onClick={() => handleSelect(t.id)}
+                      onClick={() => handleSelect(t.id === 'Home' ? null : t.id)}
                       style={{ 
-                        color: active === t.id ? 'var(--text)' : 'var(--text-muted)', 
-                        background: active === t.id ? 'var(--active-bg)' : undefined,
+                        color: (t.id === 'Home' ? (active === null) : (active === t.id)) ? 'var(--text)' : 'var(--text-muted)', 
+                        background: (t.id === 'Home' ? (active === null) : (active === t.id)) ? 'var(--active-bg)' : undefined,
                         marginBottom: 4
                       }}
                       title={t.name}
@@ -209,8 +210,8 @@ export function Sidebar({ active, onSelect, theme = 'dark', collapsed, onToggleC
                   return (
                     <div
                       key={t.id}
-                      className={`sidebar-item ${active === t.id ? 'active' : ''}`}
-                      onClick={() => handleSelect(t.id)}
+                      className={`sidebar-item ${(t.id === 'Home' ? (active === null) : (active === t.id)) ? 'active' : ''}`}
+                      onClick={() => handleSelect(t.id === 'Home' ? null : t.id)}
                     >
                       <Icon />
                       <span>{t.name}</span>

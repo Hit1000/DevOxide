@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Dev Oxide",
-  "version": "0.1.0",
-  "identifier": "com.devkit.desktop",
+  "productName": "DevOxide",
+  "version": "0.1.13",
+  "identifier": "DevOxide Desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,11 +12,15 @@
   "app": {
     "windows": [
       {
-        "title": "Dev Oxide",
+        "title": "DevOxide",
         "width": 1000,
         "height": 700,
         "decorations": false,
-        "visible": false
+        "visible": false,
+        "backgroundColor": "#09090b",
+        "shadow": false,
+        "transparent": true,
+        "theme": "Dark"
       }
     ],
     "security": {
@@ -25,6 +29,7 @@
   },
   "bundle": {
     "active": true,
+    "publisher": "Hit1000",
     "targets": "all",
     "icon": [
       "icons/32x32.png",
