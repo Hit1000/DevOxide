@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Icons } from './Icons';
+import { usePersistedState } from '../hooks/useStore';
 
 // Moon icon
 const MoonIcon = () => (
@@ -20,7 +21,7 @@ export function TopBar({ toolName, hint, theme, onToggleTheme, onGoHome }: TopBa
   const btnRef = React.useRef<HTMLButtonElement>(null);
   const settingsRef = React.useRef<HTMLDivElement>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [textSize, setTextSize] = useState(13);
+  const [textSize, setTextSize, textSizeLoaded] = usePersistedState<number>('devkit_text_size', 13);
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -32,24 +33,33 @@ export function TopBar({ toolName, hint, theme, onToggleTheme, onGoHome }: TopBa
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showSettings]);
 
+  // Apply CSS var when text size changes and migrate legacy localStorage value
   React.useEffect(() => {
-    const savedSize = localStorage.getItem('devkit_text_size');
-    if (savedSize) {
-      const size = parseInt(savedSize, 10);
-      setTextSize(size);
-      document.documentElement.style.setProperty('--base-font-size', `${size}px`);
-    } else {
+    // Always ensure there's a sensible default while store loads
+    if (!textSizeLoaded) {
       document.documentElement.style.setProperty('--base-font-size', '13px');
+      return;
     }
-  }, []);
+
+    // If store already has a non-default value, prefer it and remove legacy localStorage.
+    const savedLocal = localStorage.getItem('devkit_text_size');
+    if (savedLocal) {
+      const localVal = parseInt(savedLocal, 10);
+      if (textSize === 13) {
+        // migrate to store
+        setTextSize(localVal);
+      }
+      // cleanup legacy localStorage either way
+      try { localStorage.removeItem('devkit_text_size'); } catch {}
+    }
+
+    document.documentElement.style.setProperty('--base-font-size', `${textSize}px`);
+  }, [textSize, textSizeLoaded, setTextSize]);
 
   const changeTextSize = (delta: number) => {
-    setTextSize(prev => {
-      const newSize = Math.max(10, Math.min(24, prev + delta));
-      document.documentElement.style.setProperty('--base-font-size', `${newSize}px`);
-      localStorage.setItem('devkit_text_size', newSize.toString());
-      return newSize;
-    });
+    const newSize = Math.max(10, Math.min(24, textSize + delta));
+    document.documentElement.style.setProperty('--base-font-size', `${newSize}px`);
+    setTextSize(newSize);
   };
 
   React.useEffect(() => {
