@@ -90,15 +90,20 @@ export function useWindowState() {
       try {
         const store = await getStore();
         const stored = await store.get<WindowState>(STATE_KEY);
-        if (!stored) return;
+        if (!stored) {
+          await showWindow();
+          return;
+        }
 
         if (!isValidState(stored)) {
           await store.delete(STATE_KEY);
           await store.save();
+          await showWindow();
           return;
         }
 
         if (stored.width < 200 || stored.height < 150) {
+          await showWindow();
           return;
         }
 

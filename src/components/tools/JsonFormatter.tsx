@@ -309,6 +309,31 @@ export function JsonFormatter() {
   const activeTab = tabs.find(t => t.id === activeId) ?? tabs[0];
   const input = activeTab?.content ?? '';
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+
+      const key = e.key.toLowerCase();
+      if (key === 'w') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (tabs.length > 1) {
+          const idx = tabs.findIndex(t => t.id === activeId);
+          const newTabs = tabs.filter(t => t.id !== activeId);
+          const newActive = newTabs[Math.max(0, idx - 1)]?.id ?? newTabs[0].id;
+          setTabsData({ tabs: newTabs, activeTabId: newActive });
+        }
+      } else if (key === 'n' || key === 't') {
+        e.preventDefault();
+        e.stopPropagation();
+        addTab();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [tabs, activeId]);
+
   const setInput = useCallback((val: string) => {
     setTabsData({
       tabs: tabs.map(t => t.id === activeId ? { ...t, content: val } : t),
@@ -418,6 +443,17 @@ export function JsonFormatter() {
   const scrollTabs = (dir: 1 | -1) => {
     if (scrollRef.current) scrollRef.current.scrollBy({ left: dir * 150, behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    const activeTabEl = tabRefs.current.get(activeId);
+    if (!activeTabEl) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      activeTabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeId, tabs.length]);
 
   // Stats
   const stats = React.useMemo(() => {

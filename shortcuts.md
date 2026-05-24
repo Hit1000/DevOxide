@@ -23,5 +23,13 @@ These shortcuts work from anywhere within the application.
 | Shortcut | Action |
 | --- | --- |
 | `Ctrl + Enter` (or `Cmd + Enter`) | Format & Repair the JSON input immediately |
+| `Ctrl + W` (or `Cmd + W`) | Close the current tab |
+| `Ctrl + N` / `Ctrl + T` (or `Cmd + N` / `Cmd + T`) | Create a new tab |
+
+### Notepad
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl + W` (or `Cmd + W`) | Close the current tab |
+| `Ctrl + N` / `Ctrl + T` (or `Cmd + N` / `Cmd + T`) | Create a new tab |
 
 *Note: On macOS, `Cmd` is used in place of `Ctrl`.*

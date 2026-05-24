@@ -10,9 +10,15 @@ export async function getStore(): Promise<Store> {
   if (storePromise) return storePromise;
 
   storePromise = load('devkit.json', { autoSave: 100, defaults: {} })
-    .then(s => {
+    .then(async s => {
       console.log('Store loaded successfully:', s);
       storeInstance = s;
+      // Make sure a missing store file gets recreated on first launch.
+      try {
+        await s.save();
+      } catch (saveErr) {
+        console.error('Failed to seed store file:', saveErr);
+      }
       return s;
     })
     .catch(err => {
